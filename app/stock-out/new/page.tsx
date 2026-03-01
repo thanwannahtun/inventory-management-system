@@ -28,12 +28,22 @@ export default function NewStockOutPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockProducts: ProductData[] = [
-    ];
 
-    setProducts(mockProducts);
-    setIsLoading(false);
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/products');
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   const filteredProducts = products.filter(product =>
@@ -77,7 +87,7 @@ export default function NewStockOutPage() {
           quantity: parseInt(formData.quantity),
           reason: formData.reason,
           notes: formData.notes,
-          operator: 'Current User' // Replace with actual user from auth
+          operator: 'Thanwanna' // Replace with actual user from auth
         }),
       });
 
@@ -157,10 +167,10 @@ export default function NewStockOutPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-white font-medium">{product.name}</p>
-                          <p className="text-gray-400 text-sm">{product.category}</p>
+                          <p className="text-gray-400 text-sm">{product.categoryRelation?.name}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-white font-medium">${product.price.toFixed(2)}</p>
+                          <p className="text-white font-medium">${Number(product.price).toFixed(2)}</p>
                           <p className="text-green-400 text-sm">{product.quantity} in stock</p>
                         </div>
                       </div>
@@ -180,11 +190,11 @@ export default function NewStockOutPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white font-medium">{selectedProduct.name}</p>
-                    <p className="text-gray-400 text-sm">{selectedProduct.category}</p>
+                    <p className="text-gray-400 text-sm">{selectedProduct.categoryRelation?.name}</p>
                     <p className="text-green-400 text-sm mt-1">{selectedProduct.quantity} units available</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-white font-medium">${selectedProduct.price.toFixed(2)}</p>
+                    <p className="text-white font-medium">${Number(selectedProduct.price).toFixed(2)}</p>
                     <button
                       type="button"
                       onClick={() => {
@@ -283,7 +293,7 @@ export default function NewStockOutPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Unit Price</span>
-                  <span className="text-white">${selectedProduct.price.toFixed(2)}</span>
+                  <span className="text-white">${Number(selectedProduct.price).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Quantity</span>
@@ -296,7 +306,7 @@ export default function NewStockOutPage() {
                 <div className="border-t border-gray-800 pt-3">
                   <div className="flex justify-between">
                     <span className="text-lg font-medium text-white">Total Value</span>
-                    <span className="text-lg font-bold text-red-500">-${totalValue.toFixed(2)}</span>
+                    <span className="text-lg font-bold text-red-500">-${Number(totalValue).toFixed(2)}</span>
                   </div>
                 </div>
               </div>

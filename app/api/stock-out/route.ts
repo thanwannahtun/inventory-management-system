@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       reason,
       date: new Date().toISOString().split('T')[0],
       operator: operator || 'Current User',
-      category: 'Category Name', // Would come from product relationship
+      // category: product.categoryRelation?.name, // Would come from product relationship
       unitPrice: product.price,
       totalValue: product.price * parseInt(quantity),
       notes: notes || null

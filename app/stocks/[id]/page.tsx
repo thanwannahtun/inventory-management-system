@@ -31,6 +31,14 @@ export default function ProductDetailPage() {
     fetchProducts();
   }, [params.id]);
 
+
+
+  const handleEdit = (product: ProductData) => {
+    // Navigate to edit page or open edit modal
+    window.location.href = `/stocks/edit/${product.id}`;
+  };
+
+
   if (isLoading) {
     return (
       <MainLayout>
@@ -62,7 +70,7 @@ export default function ProductDetailPage() {
             </Link>
             <div>
               <h1 className="text-3xl font-bold text-white">{product.name}</h1>
-              <p className="text-gray-400 mt-1">Product Details</p>
+              <p className="text-gray-400 mt-1">Stock Details</p>
             </div>
           </div>
           <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
@@ -251,7 +259,7 @@ export default function ProductDetailPage() {
                 <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
                   Update Stock
                 </button>
-                <button className="w-full bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+                <button onClick={() => handleEdit(product)} className="w-full bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
                   Edit Product
                 </button>
                 <button className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">

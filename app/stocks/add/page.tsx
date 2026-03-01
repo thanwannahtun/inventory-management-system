@@ -21,7 +21,7 @@ export default function AddStockPage() {
     color: '',
     storage: '',
     ram: '',
-    category: null,
+    category: 0,
     specification: {
       model: '',
       display: '',

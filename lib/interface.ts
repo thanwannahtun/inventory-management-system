@@ -28,5 +28,4 @@ export interface Specification {
   charging_port?: string;
   weight?: string;
   dimensions?: string;
-
 };
