@@ -4,14 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { ArrowLeftIcon, SaveIcon, SearchIcon } from 'lucide-react';
 import Link from 'next/link';
+import { ProductData } from '@/lib/interface';
 
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  category: string;
-}
 
 interface StockOutFormData {
   productId: string;
@@ -28,21 +22,16 @@ export default function NewStockOutPage() {
     notes: ''
   });
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<ProductData[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Mock data - replace with API call
-    const mockProducts: Product[] = [
-      { id: 1, name: 'iPhone 15 Pro Max', price: 1199.99, quantity: 25, category: 'SmartPhone Category' },
-      { id: 2, name: 'Samsung Galaxy S24 Ultra', price: 1299.99, quantity: 15, category: 'SmartPhone Category' },
-      { id: 3, name: 'MacBook Pro 16"', price: 2499.99, quantity: 8, category: 'Laptop Category' },
-      { id: 4, name: 'iPad Pro 12.9"', price: 1099.99, quantity: 0, category: 'Tablet Category' },
-      { id: 5, name: 'Dell XPS 15', price: 1899.99, quantity: 12, category: 'Laptop Category' }
+    const mockProducts: ProductData[] = [
     ];
-    
+
     setProducts(mockProducts);
     setIsLoading(false);
   }, []);
@@ -52,10 +41,10 @@ export default function NewStockOutPage() {
     product.quantity > 0
   );
 
-  const handleProductSelect = (product: Product) => {
+  const handleProductSelect = (product: ProductData) => {
     setFormData(prev => ({
       ...prev,
-      productId: product.id.toString()
+      productId: (product?.id ?? 0).toString()
     }));
     setSelectedProduct(product);
     setSearchTerm(product.name);
@@ -71,7 +60,7 @@ export default function NewStockOutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedProduct || !formData.quantity) {
       alert('Please select a product and enter quantity');
       return;
@@ -95,7 +84,7 @@ export default function NewStockOutPage() {
       if (response.ok) {
         const result = await response.json();
         console.log('Stock out processed successfully:', result);
-        
+
         // Redirect to stock out page or detail page
         window.location.href = '/stock-out';
       } else {
@@ -108,7 +97,7 @@ export default function NewStockOutPage() {
     }
   };
 
-  const totalValue = selectedProduct && formData.quantity 
+  const totalValue = selectedProduct && formData.quantity
     ? selectedProduct.price * parseInt(formData.quantity)
     : 0;
 
@@ -141,7 +130,7 @@ export default function NewStockOutPage() {
           {/* Product Selection */}
           <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
             <h2 className="text-xl font-bold text-white mb-6">Product Selection</h2>
-            
+
             {/* Product Search */}
             <div className="relative mb-4">
               <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -216,7 +205,7 @@ export default function NewStockOutPage() {
           {/* Stock Out Details */}
           <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
             <h2 className="text-xl font-bold text-white mb-6">Stock Out Details</h2>
-            
+
             <div className="space-y-6">
               {/* Quantity */}
               <div>

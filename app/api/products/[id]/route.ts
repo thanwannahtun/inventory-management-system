@@ -17,7 +17,10 @@ export async function GET(
           model: Category,
           as: 'categoryRelation',
           attributes: ['id', 'name']
-        }
+        },
+        {
+          model: Specification,
+        },
       ]
     });
 
@@ -28,15 +31,11 @@ export async function GET(
       );
     }
 
-    // Get specifications if needed
-    const specifications = await Specification.findOne({
-      // You might need to add a foreign key to link specifications to products
-      // For now, this is a placeholder
-    });
+   
 
     return NextResponse.json({
       ...product.toJSON(),
-      specifications
+      // specifications
     });
   } catch (error) {
     console.error('Error fetching product:', error);

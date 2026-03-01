@@ -5,68 +5,15 @@ import { MainLayout } from '@/components/Layout/MainLayout';
 import { useParams } from 'next/navigation';
 import { ArrowLeftIcon, EditIcon, PackageIcon, CameraIcon, MonitorIcon, CpuIcon, BatteryIcon, WeightIcon } from 'lucide-react';
 import Link from 'next/link';
+import { ProductData } from '@/lib/interface';
 
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-  color?: string;
-  storage?: string;
-  ram?: string;
-  category: number;
-  categoryName?: string;
-  specifications?: {
-    model?: string;
-    display?: string;
-    resolution?: string;
-    os?: string;
-    chipset?: string;
-    main_camera?: string;
-    selfie_camera?: string;
-    battery?: string;
-    charging?: string;
-    charging_port?: string;
-    weight?: string;
-    dimensions?: string;
-  };
-}
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<ProductData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockProduct: Product = {
-      id: parseInt(params.id as string),
-      name: 'iPhone 15 Pro Max',
-      price: 1199.99,
-      quantity: 25,
-      image: '/placeholder-phone.jpg',
-      color: 'Titanium Blue',
-      storage: '256GB',
-      ram: '8GB',
-      category: 1,
-      categoryName: 'SmartPhone Category',
-      specifications: {
-        model: 'iPhone 15 Pro Max',
-        display: '6.7 inches',
-        resolution: '2796 x 1290 pixels',
-        os: 'iOS 17',
-        chipset: 'A17 Pro',
-        main_camera: '48MP',
-        selfie_camera: '12MP',
-        battery: '4422 mAh',
-        charging: 'Fast charging 27W',
-        charging_port: 'USB Type-C',
-        weight: '221 g',
-        dimensions: '159.9 x 76.7 x 8.25 mm'
-      }
-    };
-
     const fetchProducts = async () => {
       try {
         const response = await fetch(`/api/products/${params.id}`);
@@ -138,8 +85,8 @@ export default function ProductDetailPage() {
                     <h2 className="text-2xl font-bold text-white mb-2">{product.name}</h2>
                     <div className="flex items-center space-x-4">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${product.quantity > 0
-                          ? 'bg-green-900 text-green-300'
-                          : 'bg-red-900 text-red-300'
+                        ? 'bg-green-900 text-green-300'
+                        : 'bg-red-900 text-red-300'
                         }`}>
                         {product.quantity > 0 ? `${product.quantity} units in stock` : 'Out of stock'}
                       </span>
@@ -170,14 +117,14 @@ export default function ProductDetailPage() {
                   )}
                   <div>
                     <p className="text-sm text-gray-400">Category</p>
-                    <p className="text-white font-medium">{product.categoryName}</p>
+                    <p className="text-white font-medium">{product.categoryRelation?.name}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Detailed Specifications */}
-            {product.specifications && (
+            {product.specification && (
               <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
                 <h3 className="text-xl font-bold text-white mb-6 flex items-center">
                   <CpuIcon className="h-5 w-5 mr-2 text-blue-500" />
@@ -191,16 +138,16 @@ export default function ProductDetailPage() {
                       <MonitorIcon className="h-4 w-4 mr-2 text-gray-400" />
                       Display
                     </h4>
-                    {product.specifications.display && (
+                    {product.specification?.display && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Display Size</span>
-                        <span className="text-white">{product.specifications.display}</span>
+                        <span className="text-white">{product.specification?.display}</span>
                       </div>
                     )}
-                    {product.specifications.resolution && (
+                    {product.specification?.resolution && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Resolution</span>
-                        <span className="text-white">{product.specifications.resolution}</span>
+                        <span className="text-white">{product.specification?.resolution}</span>
                       </div>
                     )}
                   </div>
@@ -211,16 +158,16 @@ export default function ProductDetailPage() {
                       <CpuIcon className="h-4 w-4 mr-2 text-gray-400" />
                       Performance
                     </h4>
-                    {product.specifications.os && (
+                    {product.specification?.os && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Operating System</span>
-                        <span className="text-white">{product.specifications.os}</span>
+                        <span className="text-white">{product.specification?.os}</span>
                       </div>
                     )}
-                    {product.specifications.chipset && (
+                    {product.specification?.chipset && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Chipset</span>
-                        <span className="text-white">{product.specifications.chipset}</span>
+                        <span className="text-white">{product.specification?.chipset}</span>
                       </div>
                     )}
                   </div>
@@ -231,16 +178,16 @@ export default function ProductDetailPage() {
                       <CameraIcon className="h-4 w-4 mr-2 text-gray-400" />
                       Camera
                     </h4>
-                    {product.specifications.main_camera && (
+                    {product.specification?.main_camera && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Main Camera</span>
-                        <span className="text-white">{product.specifications.main_camera}</span>
+                        <span className="text-white">{product.specification?.main_camera}</span>
                       </div>
                     )}
-                    {product.specifications.selfie_camera && (
+                    {product.specification?.selfie_camera && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Selfie Camera</span>
-                        <span className="text-white">{product.specifications.selfie_camera}</span>
+                        <span className="text-white">{product.specification?.selfie_camera}</span>
                       </div>
                     )}
                   </div>
@@ -251,22 +198,22 @@ export default function ProductDetailPage() {
                       <BatteryIcon className="h-4 w-4 mr-2 text-gray-400" />
                       Battery & Power
                     </h4>
-                    {product.specifications.battery && (
+                    {product.specification?.battery && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Battery Capacity</span>
-                        <span className="text-white">{product.specifications.battery}</span>
+                        <span className="text-white">{product.specification?.battery}</span>
                       </div>
                     )}
-                    {product.specifications.charging && (
+                    {product.specification?.charging && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Charging</span>
-                        <span className="text-white">{product.specifications.charging}</span>
+                        <span className="text-white">{product.specification?.charging}</span>
                       </div>
                     )}
-                    {product.specifications.charging_port && (
+                    {product.specification?.charging_port && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Charging Port</span>
-                        <span className="text-white">{product.specifications.charging_port}</span>
+                        <span className="text-white">{product.specification?.charging_port}</span>
                       </div>
                     )}
                   </div>
@@ -277,16 +224,16 @@ export default function ProductDetailPage() {
                       <WeightIcon className="h-4 w-4 mr-2 text-gray-400" />
                       Physical
                     </h4>
-                    {product.specifications.weight && (
+                    {product.specification?.weight && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Weight</span>
-                        <span className="text-white">{product.specifications.weight}</span>
+                        <span className="text-white">{product.specification?.weight}</span>
                       </div>
                     )}
-                    {product.specifications.dimensions && (
+                    {product.specification?.dimensions && (
                       <div className="flex justify-between">
                         <span className="text-gray-400">Dimensions</span>
-                        <span className="text-white">{product.specifications.dimensions}</span>
+                        <span className="text-white">{product.specification?.dimensions}</span>
                       </div>
                     )}
                   </div>

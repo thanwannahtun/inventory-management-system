@@ -79,15 +79,15 @@ export async function GET(request: NextRequest) {
 // POST new product
 export async function POST(request: NextRequest) {
   try {
-    const { 
-      name, 
-      price, 
-      quantity, 
-      color, 
-      storage, 
-      ram, 
-      category, 
-      specifications 
+    const {
+      name,
+      price,
+      quantity,
+      color,
+      storage,
+      ram,
+      category,
+      specifications
     } = await request.json();
 
     if (!name || !price || !quantity || !category) {
@@ -112,6 +112,8 @@ export async function POST(request: NextRequest) {
       await Specification.create({
         ...specifications,
         // You might want to link this to the product if needed
+        product_id: product.id,
+
       });
     }
 

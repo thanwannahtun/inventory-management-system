@@ -1,7 +1,8 @@
 import 'reflect-metadata'; // 👈 required for decorator metadata for sequelize
 import { Optional } from 'sequelize';
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasOne } from 'sequelize-typescript';
 import { Category } from './Category';
+import { Specification } from './Specification';
 
 interface ProductAttributes {
     id: number;
@@ -46,4 +47,7 @@ export class Product extends Model<ProductAttributes, ProductCreationAttributes>
 
     @BelongsTo(() => Category, 'category')
     declare categoryRelation: Category;
+
+    @HasOne(() => Specification)
+    declare specification: Specification;
 }

@@ -3,38 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { SearchIcon, FilterIcon, EyeIcon, EditIcon, PackageIcon } from 'lucide-react';
-import Link from 'next/link';
 import { Category } from '@/db/models/Category';
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-  color?: string;
-  storage?: string;
-  ram?: string;
-  category: number;
-  categoryName?: string;
-  specifications?: {
-    model?: string;
-    display?: string;
-    resolution?: string;
-    os?: string;
-    chipset?: string;
-    main_camera?: string;
-    selfie_camera?: string;
-    battery?: string;
-    charging?: string;
-    charging_port?: string;
-    weight?: string;
-    dimensions?: string;
-  };
-}
+import { ProductData } from '@/lib/interface';
 
 export default function StockSearchPage() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
@@ -86,7 +59,7 @@ export default function StockSearchPage() {
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.color && product.color.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = !selectedCategory || product.category.toString() === selectedCategory;
+    const matchesCategory = !selectedCategory || product?.category.toString() === selectedCategory;
     const matchesPrice = (!priceRange.min || product.price >= parseFloat(priceRange.min)) &&
       (!priceRange.max || product.price <= parseFloat(priceRange.max));
     const matchesStock = !inStockOnly || product.quantity > 0;
@@ -94,9 +67,9 @@ export default function StockSearchPage() {
     return matchesSearch && matchesCategory && matchesPrice && matchesStock;
   });
 
-  const handleEdit = (category: Product) => {
+  const handleEdit = (product: ProductData) => {
     // Navigate to edit page or open edit modal
-    window.location.href = `/stocks/${category.id}`;
+    window.location.href = `/stocks/${product.id}`;
   };
 
   if (isLoading) {
@@ -236,7 +209,7 @@ export default function StockSearchPage() {
                   {product.color && <p>Color: {product.color}</p>}
                   {product.storage && <p>Storage: {product.storage}</p>}
                   {product.ram && <p>RAM: {product.ram}</p>}
-                  {product.categoryName && <p>Category: {product.categoryName}</p>}
+                  {product.categoryRelation?.name && <p>Category: {product?.categoryRelation?.name}</p>}
                 </div>
 
                 {/* Action Buttons */}

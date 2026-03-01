@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { ArrowLeftIcon, SaveIcon, PlusIcon, XIcon } from 'lucide-react';
 import Link from 'next/link';
+import { ProductData } from '@/lib/interface';
 
 interface Category {
   id: number;
@@ -12,40 +13,16 @@ interface Category {
   is_active: boolean;
 }
 
-interface ProductFormData {
-  name: string;
-  price: string;
-  quantity: string;
-  color: string;
-  storage: string;
-  ram: string;
-  category: string;
-  specifications: {
-    model: string;
-    display: string;
-    resolution: string;
-    os: string;
-    chipset: string;
-    main_camera: string;
-    selfie_camera: string;
-    battery: string;
-    charging: string;
-    charging_port: string;
-    weight: string;
-    dimensions: string;
-  };
-}
-
 export default function AddStockPage() {
-  const [formData, setFormData] = useState<ProductFormData>({
+  const [formData, setFormData] = useState<ProductData>({
     name: '',
-    price: '',
-    quantity: '',
+    price: 0,
+    quantity: 0,
     color: '',
     storage: '',
     ram: '',
-    category: '',
-    specifications: {
+    category: null,
+    specification: {
       model: '',
       display: '',
       resolution: '',
@@ -58,7 +35,7 @@ export default function AddStockPage() {
       charging_port: '',
       weight: '',
       dimensions: ''
-    }
+    },
   });
 
   const [showSpecifications, setShowSpecifications] = useState(false);
@@ -88,8 +65,8 @@ export default function AddStockPage() {
       const specField = name.replace('spec_', '');
       setFormData(prev => ({
         ...prev,
-        specifications: {
-          ...prev.specifications,
+        specification: {
+          ...prev.specification,
           [specField]: value
         }
       }));
@@ -116,13 +93,13 @@ export default function AddStockPage() {
       // Prepare product data
       const productData = {
         name: formData.name,
-        price: parseFloat(formData.price),
-        quantity: parseInt(formData.quantity),
+        price: formData.price,
+        quantity: formData.quantity,
         color: formData.color || null,
         storage: formData.storage || null,
         ram: formData.ram || null,
-        category: parseInt(formData.category),
-        specifications: showSpecifications ? formData.specifications : null
+        category: formData.category,
+        specifications: showSpecifications ? formData.specification : null
       };
 
       const response = await fetch('/api/products', {
@@ -139,7 +116,7 @@ export default function AddStockPage() {
         
         // Show success message and redirect
         alert('Product added successfully!');
-        window.location.href = '/stocks/search';
+        // window.location.href = '/stocks/search';
       } else {
         const error = await response.json();
         alert(`Error: ${error.error}`);
@@ -200,7 +177,7 @@ export default function AddStockPage() {
                 <select
                   id="category"
                   name="category"
-                  value={formData.category}
+                  value={formData.category ?? 0}
                   onChange={handleInputChange}
                   required
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
@@ -325,7 +302,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_model"
                     name="spec_model"
-                    value={formData.specifications.model}
+                    value={formData.specification?.model}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., iPhone 15 Pro Max"
@@ -341,7 +318,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_display"
                     name="spec_display"
-                    value={formData.specifications.display}
+                    value={formData.specification?.display}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., 6.7 inches"
@@ -357,7 +334,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_resolution"
                     name="spec_resolution"
-                    value={formData.specifications.resolution}
+                    value={formData.specification?.resolution}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., 2796 x 1290 pixels"
@@ -373,7 +350,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_os"
                     name="spec_os"
-                    value={formData.specifications.os}
+                    value={formData.specification?.os}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., iOS 17, Android 14"
@@ -389,7 +366,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_chipset"
                     name="spec_chipset"
-                    value={formData.specifications.chipset}
+                    value={formData.specification?.chipset}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., A17 Pro, Snapdragon 8 Gen 3"
@@ -405,7 +382,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_main_camera"
                     name="spec_main_camera"
-                    value={formData.specifications.main_camera}
+                    value={formData.specification?.main_camera}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., 48MP"
@@ -421,7 +398,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_selfie_camera"
                     name="spec_selfie_camera"
-                    value={formData.specifications.selfie_camera}
+                    value={formData.specification?.selfie_camera}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., 12MP"
@@ -437,7 +414,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_battery"
                     name="spec_battery"
-                    value={formData.specifications.battery}
+                    value={formData.specification?.battery}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., 4422 mAh"
@@ -453,7 +430,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_charging"
                     name="spec_charging"
-                    value={formData.specifications.charging}
+                    value={formData.specification?.charging}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., Fast charging 27W"
@@ -469,7 +446,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_charging_port"
                     name="spec_charging_port"
-                    value={formData.specifications.charging_port}
+                    value={formData.specification?.charging_port}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., USB Type-C, Lightning"
@@ -485,7 +462,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_weight"
                     name="spec_weight"
-                    value={formData.specifications.weight}
+                    value={formData.specification?.weight}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., 221 g"
@@ -501,7 +478,7 @@ export default function AddStockPage() {
                     type="text"
                     id="spec_dimensions"
                     name="spec_dimensions"
-                    value={formData.specifications.dimensions}
+                    value={formData.specification?.dimensions}
                     onChange={handleInputChange}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     placeholder="e.g., 159.9 x 76.7 x 8.25 mm"

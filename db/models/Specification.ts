@@ -1,9 +1,11 @@
 import 'reflect-metadata'; // 👈 required for decorator metadata for sequelize
-import { Optional } from 'sequelize';
-import { Table, Column, Model, DataType } from 'sequelize-typescript';
+import type { NonAttribute, Optional } from 'sequelize';
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { Product } from './Product';
 
 interface SpecificationAttributes {
     id: number;
+    product_id: number;
     model?: string | null;
     display?: string | null;
     resolution?: string | null;
@@ -24,6 +26,13 @@ interface SpecificationCreationAttributes extends Optional<SpecificationAttribut
 export class Specification extends Model<SpecificationAttributes, SpecificationCreationAttributes> {
     @Column({ type: DataType.STRING, allowNull: true })
     declare model?: string | null;
+
+    @ForeignKey(() => Product)
+    @Column({ type: DataType.INTEGER, allowNull: false })
+    declare product_id: number;
+
+    @BelongsTo(() => Product, 'product_id')
+    declare product: NonAttribute<Product>;
 
     @Column({ type: DataType.STRING, allowNull: true })
     declare display?: string | null;
@@ -57,4 +66,6 @@ export class Specification extends Model<SpecificationAttributes, SpecificationC
 
     @Column({ type: DataType.STRING, allowNull: true })
     declare dimensions?: string | null;
+
+
 }
