@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Category } from '@/db/models/Category';
+import { sequelize } from '@/db/config/database';
 
 // GET all categories
 export async function GET() {
   try {
-    const categories = await Category.findAll({
+    const categories = await sequelize.models.Category.findAll({
       include: [
         {
           model: Category,

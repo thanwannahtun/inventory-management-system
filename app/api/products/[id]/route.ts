@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Product } from '@/db/models/Product';
 import { Category } from '@/db/models/Category';
 import { Specification } from '@/db/models/Specification';
+import { sequelize } from '@/db/config/database';
 
 // GET single product
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }>}
 ) {
   try {
-    const product = await Product.findByPk(params.id, {
+    const {id } = await params;
+    const product = await sequelize.models.Product.findByPk(id, {
       include: [
         {
           model: Category,
@@ -48,12 +50,13 @@ export async function GET(
 // PUT update product
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }>}
 ) {
   try {
+    const {id} = await params;
     const body = await request.json();
     
-    const product = await Product.findByPk(params.id);
+    const product = await Product.findByPk(id);
     
     if (!product) {
       return NextResponse.json(
@@ -94,7 +97,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const product = await Product.findByPk(params.id);
+    const {id} = await params;
+    const product = await Product.findByPk(id);
     
     if (!product) {
       return NextResponse.json(

@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { ArrowLeftIcon, SaveIcon } from 'lucide-react';
 import Link from 'next/link';
+import { Category } from '@/db/models/Category';
 
 export default function AddCategoryPage() {
   const [formData, setFormData] = useState({
@@ -12,9 +13,31 @@ export default function AddCategoryPage() {
     is_active: true
   });
 
+  const [categoriesData, setCategoriesData] = useState<Category[]>([]);
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategoriesData = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (response.ok) {
+          const data = await response.json();
+          setCategoriesData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setIsCategoriesLoading(false);
+      }
+    };
+      fetchCategoriesData();
+  }, [])
+
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!formData.name) {
       alert('Please enter a category name');
@@ -40,7 +63,7 @@ export default function AddCategoryPage() {
       if (response.ok) {
         const result = await response.json();
         console.log('Category saved successfully:', result);
-        
+
         // Show success message and redirect
         alert('Category added successfully!');
         window.location.href = '/categories';
@@ -98,7 +121,10 @@ export default function AddCategoryPage() {
 
             {/* Parent Category */}
             <div>
-              <label htmlFor="parent_id" className="block text-sm font-medium text-gray-300 mb-2">
+              <label
+                htmlFor="parent_id"
+                className="block text-sm font-medium text-gray-300 mb-2"
+              >
                 Parent Category
               </label>
               <select
@@ -109,15 +135,20 @@ export default function AddCategoryPage() {
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option value="">None (Root Category)</option>
-                <option value="1">SmartPhone Category</option>
-                <option value="2">Laptop Category</option>
-                <option value="3">Tablet Category</option>
+                {isCategoriesLoading ? (
+                  <option disabled>Loading...</option>
+                ) : (
+                  categoriesData.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))
+                )}
               </select>
               <p className="mt-1 text-xs text-gray-400">
                 Select a parent category to create a subcategory
               </p>
             </div>
-
             {/* Active Status */}
             <div className="flex items-center">
               <input

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { SearchIcon, FilterIcon, EyeIcon, EditIcon, PackageIcon } from 'lucide-react';
+import Link from 'next/link';
+import { Category } from '@/db/models/Category';
 
 interface Product {
   id: number;
@@ -40,87 +42,62 @@ export default function StockSearchPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
 
+  const [categoriesData, setCategoriesData] = useState<Category[]>([]);
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
+
+
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockProducts: Product[] = [
-      {
-        id: 1,
-        name: 'iPhone 15 Pro Max',
-        price: 1199.99,
-        quantity: 25,
-        image: '/placeholder-phone.jpg',
-        color: 'Titanium Blue',
-        storage: '256GB',
-        ram: '8GB',
-        category: 1,
-        categoryName: 'SmartPhone Category',
-        specifications: {
-          model: 'iPhone 15 Pro Max',
-          display: '6.7 inches',
-          resolution: '2796 x 1290 pixels',
-          os: 'iOS 17',
-          chipset: 'A17 Pro',
-          main_camera: '48MP',
-          selfie_camera: '12MP',
-          battery: '4422 mAh',
-          charging: 'Fast charging 27W',
-          charging_port: 'USB Type-C',
-          weight: '221 g',
-          dimensions: '159.9 x 76.7 x 8.25 mm'
+
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/products');
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(data);
         }
-      },
-      {
-        id: 2,
-        name: 'Samsung Galaxy S24 Ultra',
-        price: 1299.99,
-        quantity: 15,
-        image: '/placeholder-phone.jpg',
-        color: 'Titanium Black',
-        storage: '512GB',
-        ram: '12GB',
-        category: 1,
-        categoryName: 'SmartPhone Category'
-      },
-      {
-        id: 3,
-        name: 'MacBook Pro 16"',
-        price: 2499.99,
-        quantity: 8,
-        image: '/placeholder-laptop.jpg',
-        color: 'Space Gray',
-        storage: '1TB SSD',
-        ram: '32GB',
-        category: 2,
-        categoryName: 'Laptop Category'
-      },
-      {
-        id: 4,
-        name: 'iPad Pro 12.9"',
-        price: 1099.99,
-        quantity: 0,
-        image: '/placeholder-tablet.jpg',
-        color: 'Silver',
-        storage: '256GB',
-        ram: '8GB',
-        category: 3,
-        categoryName: 'Tablet Category'
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setIsLoading(false);
       }
-    ];
-    
-    setProducts(mockProducts);
-    setIsLoading(false);
+    };
+
+    fetchProducts();
   }, []);
+
+  useEffect(() => {
+    const fetchCategoriesData = async () => {
+      try {
+        const response = await fetch('/api/categories');
+        if (response.ok) {
+          const data = await response.json();
+          setCategoriesData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setIsCategoriesLoading(false);
+      }
+    };
+
+    fetchCategoriesData();
+  }, [])
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (product.color && product.color.toLowerCase().includes(searchTerm.toLowerCase()));
+      (product.color && product.color.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = !selectedCategory || product.category.toString() === selectedCategory;
     const matchesPrice = (!priceRange.min || product.price >= parseFloat(priceRange.min)) &&
-                       (!priceRange.max || product.price <= parseFloat(priceRange.max));
+      (!priceRange.max || product.price <= parseFloat(priceRange.max));
     const matchesStock = !inStockOnly || product.quantity > 0;
-    
+
     return matchesSearch && matchesCategory && matchesPrice && matchesStock;
   });
+
+  const handleEdit = (category: Product) => {
+    // Navigate to edit page or open edit modal
+    window.location.href = `/stocks/${category.id}`;
+  };
 
   if (isLoading) {
     return (
@@ -176,9 +153,15 @@ export default function StockSearchPage() {
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
                 >
                   <option value="">All Categories</option>
-                  <option value="1">SmartPhone Category</option>
-                  <option value="2">Laptop Category</option>
-                  <option value="3">Tablet Category</option>
+                  {isCategoriesLoading ? (
+                    <option disabled>Loading...</option>
+                  ) : (
+                    categoriesData.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -240,17 +223,16 @@ export default function StockSearchPage() {
               <div className="p-4">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="text-lg font-semibold text-white line-clamp-2">{product.name}</h3>
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    product.quantity > 0 
-                      ? 'bg-green-900 text-green-300' 
-                      : 'bg-red-900 text-red-300'
-                  }`}>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${product.quantity > 0
+                    ? 'bg-green-900 text-green-300'
+                    : 'bg-red-900 text-red-300'
+                    }`}>
                     {product.quantity > 0 ? `${product.quantity} in stock` : 'Out of stock'}
                   </span>
                 </div>
 
                 <div className="space-y-1 text-sm text-gray-400">
-                  <p className="text-xl font-bold text-white">${product.price.toFixed(2)}</p>
+                  <p className="text-xl font-bold text-white">${Number(product.price).toFixed(2)}</p>
                   {product.color && <p>Color: {product.color}</p>}
                   {product.storage && <p>Storage: {product.storage}</p>}
                   {product.ram && <p>RAM: {product.ram}</p>}
@@ -259,10 +241,9 @@ export default function StockSearchPage() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-2 mt-4">
-                  <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm flex items-center justify-center space-x-1 transition-colors">
+                  <button onClick={() => handleEdit(product)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm flex items-center justify-center space-x-1 transition-colors">
                     <EyeIcon className="h-4 w-4" />
-                    <span>View</span>
-                  </button>
+                    <span>View</span>                  </button>
                   <button className="flex-1 bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 rounded text-sm flex items-center justify-center space-x-1 transition-colors">
                     <EditIcon className="h-4 w-4" />
                     <span>Edit</span>

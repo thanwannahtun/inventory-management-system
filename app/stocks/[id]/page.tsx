@@ -66,9 +66,22 @@ export default function ProductDetailPage() {
         dimensions: '159.9 x 76.7 x 8.25 mm'
       }
     };
-    
-    setProduct(mockProduct);
-    setIsLoading(false);
+
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(`/api/products/${params.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setProduct(data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, [params.id]);
 
   if (isLoading) {
@@ -124,14 +137,13 @@ export default function ProductDetailPage() {
                   <div>
                     <h2 className="text-2xl font-bold text-white mb-2">{product.name}</h2>
                     <div className="flex items-center space-x-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                        product.quantity > 0 
-                          ? 'bg-green-900 text-green-300' 
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${product.quantity > 0
+                          ? 'bg-green-900 text-green-300'
                           : 'bg-red-900 text-red-300'
-                      }`}>
+                        }`}>
                         {product.quantity > 0 ? `${product.quantity} units in stock` : 'Out of stock'}
                       </span>
-                      <span className="text-2xl font-bold text-blue-500">${product.price.toFixed(2)}</span>
+                      <span className="text-2xl font-bold text-blue-500">${Number(product.price).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -171,7 +183,7 @@ export default function ProductDetailPage() {
                   <CpuIcon className="h-5 w-5 mr-2 text-blue-500" />
                   Technical Specifications
                 </h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Display Section */}
                   <div className="space-y-4">
@@ -311,11 +323,11 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Unit Price</span>
-                  <span className="text-white font-medium">${product.price.toFixed(2)}</span>
+                  <span className="text-white font-medium">${Number(product.price).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Total Value</span>
-                  <span className="text-white font-medium">${(product.price * product.quantity).toFixed(2)}</span>
+                  <span className="text-white font-medium">${Number((product.price * product.quantity)).toFixed(2)}</span>
                 </div>
               </div>
             </div>

@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Category } from '@/db/models/Category';
+import { sequelize } from '@/db/config/database';
 
 // GET single category
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const category = await Category.findByPk(params.id, {
+    const { id } = await params;
+    const category = await sequelize.models.Category.findByPk(id, {
       include: [
         {
           model: Category,
@@ -40,13 +42,16 @@ export async function GET(
 // PUT update category
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
+  
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
-    
-    const category = await Category.findByPk(params.id);
-    
+
+    // const category = await sequelize.models.Category.findByPk(id);
+    const category = await Category.findByPk(id);
+
     if (!category) {
       return NextResponse.json(
         { error: 'Category not found' },
@@ -73,11 +78,12 @@ export async function PUT(
 // DELETE category
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const category = await Category.findByPk(params.id);
-    
+     const { id } = await params;
+    const category = await sequelize.models.Category.findByPk(id);
+
     if (!category) {
       return NextResponse.json(
         { error: 'Category not found' },
@@ -87,7 +93,7 @@ export async function DELETE(
 
     // Check if category has children
     const hasChildren = await Category.count({
-      where: { parent_id: params.id }
+      where: { parent_id: id }
     });
 
     if (hasChildren > 0) {
