@@ -6,6 +6,7 @@ import { ArrowLeftIcon, SaveIcon, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation'; // Added for URL params
 import { Category } from '@/db/models/Category';
+import { authFetch } from '@/lib/api-client';
 
 function AddCategoryForm() {
   const searchParams = useSearchParams();
@@ -29,7 +30,7 @@ function AddCategoryForm() {
 
     const fetchCategoriesData = async () => {
       try {
-        const response = await fetch('/api/categories');
+        const response = await authFetch('/api/categories');
         if (response.ok) {
           const data = await response.json();
           setCategoriesData(data);

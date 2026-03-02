@@ -5,6 +5,7 @@ import { MainLayout } from '@/components/Layout/MainLayout';
 import { ArrowLeftIcon, SaveIcon, PlusIcon, XIcon } from 'lucide-react';
 import Link from 'next/link';
 import { ProductData } from '@/lib/interface';
+import { authFetch } from '@/lib/api-client';
 
 interface Category {
   id: number;
@@ -103,12 +104,10 @@ export default function AddStockPage() {
         specifications: showSpecifications ? formData.specification : null
       };
 
-      const response = await fetch('/api/products', {
+      const response = await authFetch('/api/products', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(productData),
+
       });
 
       if (response.ok) {

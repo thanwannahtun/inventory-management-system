@@ -4,6 +4,10 @@ import { Category } from '@/db/models/Category';
 import { Specification } from '@/db/models/Specification';
 import { Op } from 'sequelize';
 import { connectDatabase, sequelize } from '@/db/config/database';
+import { withAuth } from '@/lib/middleware';
+import { JWTPayload } from '@/lib/auth';
+import { ActivityLog } from '@/db/models/ActivityLog';
+import { type } from 'os';
 
 // GET all products with filtering
 export async function GET(request: NextRequest) {
@@ -78,7 +82,10 @@ export async function GET(request: NextRequest) {
 }
 
 // POST new product
-export async function POST(request: NextRequest) {
+// export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, { user }) => {
+
+  const { username } = user;
   // 1. Initialize the transaction
   let t;
 
@@ -124,6 +131,12 @@ export async function POST(request: NextRequest) {
       }, { transaction: t });
     }
 
+    await ActivityLog.create({
+      type: 'stock_in',
+      description: `${quantity} units of ${product.name} added`,
+      operator: username,
+    }, { transaction: t });
+
     // 4. Everything worked? Commit the changes!
     await t.commit();
 
@@ -139,4 +152,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

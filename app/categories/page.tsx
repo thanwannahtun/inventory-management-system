@@ -6,6 +6,7 @@ import { PlusIcon, EditIcon, TrashIcon, SearchIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import router from 'next/router';
 import Link from 'next/link';
+import { authFetch } from '@/lib/api-client';
 interface Category {
   id: number;
   name: string;
@@ -25,7 +26,7 @@ export default function CategoriesPage() {
     // Fetch real data from API
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/categories');
+        const response = await authFetch('/api/categories');
         if (response.ok) {
           const data = await response.json();
           setCategories(data);
@@ -79,7 +80,7 @@ export default function CategoriesPage() {
   const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this category?')) {
       try {
-        const response = await fetch(`/api/categories/${id}`, {
+        const response = await authFetch(`/api/categories/${id}`, {
           method: 'DELETE',
         });
 

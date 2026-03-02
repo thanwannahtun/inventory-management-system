@@ -5,6 +5,7 @@ import { MainLayout } from '@/components/Layout/MainLayout';
 import { ArrowLeftIcon, SaveIcon, SearchIcon } from 'lucide-react';
 import Link from 'next/link';
 import { ProductData } from '@/lib/interface';
+import { authFetch } from '@/lib/api-client';
 
 
 interface StockOutFormData {
@@ -31,7 +32,7 @@ export default function NewStockOutPage() {
 
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/products');
+        const response = await authFetch('/api/products');
         if (response.ok) {
           const data = await response.json();
           setProducts(data);
@@ -77,17 +78,14 @@ export default function NewStockOutPage() {
     }
 
     try {
-      const response = await fetch('/api/stock-out', {
+
+      const response = await authFetch('/api/stock-out', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           productId: parseInt(formData.productId),
           quantity: parseInt(formData.quantity),
           reason: formData.reason,
           notes: formData.notes,
-          operator: 'Thanwanna' // Replace with actual user from auth
         }),
       });
 

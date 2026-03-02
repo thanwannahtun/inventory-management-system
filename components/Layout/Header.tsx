@@ -2,12 +2,13 @@
 
 import React from 'react';
 import { SearchIcon, BellIcon, UserIcon, LogOutIcon } from 'lucide-react';
+import { useAuth } from '@/components/Auth/AuthGuard';
 
 export function Header() {
+  const { user, logout } = useAuth();
+
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/auth/login';
+    logout();
   };
 
   return (

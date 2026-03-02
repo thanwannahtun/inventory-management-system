@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { ArrowLeftIcon, EditIcon, PackageIcon, CameraIcon, MonitorIcon, CpuIcon, BatteryIcon, WeightIcon } from 'lucide-react';
 import Link from 'next/link';
 import { ProductData } from '@/lib/interface';
+import { authFetch } from '@/lib/api-client';
 
 
 export default function ProductDetailPage() {
@@ -16,7 +17,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`/api/products/${params.id}`);
+        const response = await authFetch(`/api/products/${params.id}`);
         if (response.ok) {
           const data = await response.json();
           setProduct(data);

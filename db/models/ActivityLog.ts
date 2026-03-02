@@ -1,12 +1,16 @@
 import 'reflect-metadata';
+import { Optional } from 'sequelize';
 import { Table, Column, Model, DataType } from 'sequelize-typescript';
 
 interface ActivityAttributes {
     id: number;
-    type: 'stock_in' | 'stock_out' | 'new_product' | 'category_added';
+    type: 'stock_in' | 'stock_out' | 'new_product' | 'category_added' | 'login' | 'category_updated' | 'category_deleted';
     description: string;
     operator: string;
 }
+
+interface ActivityLogCreationAttributes extends Optional<ActivityAttributes, 'id'> { }
+
 
 @Table({
     tableName: 'activitylogs',
@@ -14,9 +18,9 @@ interface ActivityAttributes {
     updatedAt: false,
     modelName: 'ActivityLog'
 })
-export class ActivityLog extends Model<ActivityAttributes> {
+export class ActivityLog extends Model<ActivityAttributes, ActivityLogCreationAttributes> {
     @Column({
-        type: DataType.ENUM('stock_in', 'stock_out', 'new_product', 'category_added'),
+        type: DataType.TEXT,
         allowNull: false
     })
     declare type: string;

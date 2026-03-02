@@ -4,6 +4,9 @@ import { Op } from 'sequelize';
 import { sequelize } from '@/db/config/database';
 import { Category } from '@/db/models/Category';
 import { connectDatabase } from '@/db/config/database';
+import { ActivityLog } from '@/db/models/ActivityLog';
+import { withAuth } from '@/lib/middleware';
+import { JWTPayload } from '@/lib/auth';
 
 // GET all stock out records with filtering
 export async function GET(request: NextRequest) {
@@ -53,13 +56,21 @@ export async function GET(request: NextRequest) {
 
 
 // POST new stock out record
-export async function POST(request: NextRequest) {
+// export const POST = withAuth(async (request: NextRequest, context: {
+//   user: JWTPayload;
+// }) => {
+// export const POST = withAuth(async (request: NextRequest, { user }) => {
+export const POST = withAuth(async (request: NextRequest & { user: JWTPayload }) => {
+
+    const { username} = request.user;
+
+  // export async function POST(request: NextRequest) {
   // Declare t outside so it's accessible in the catch block
   let t;
   try {
     await connectDatabase();
     t = await sequelize.transaction();
-    const { productId, quantity, reason, notes, operator } = await request.json();
+    const { productId, quantity, reason, notes } = await request.json();
 
     if (!productId || !quantity || !reason) {
       await t.rollback();
@@ -106,7 +117,7 @@ export async function POST(request: NextRequest) {
         quantity: outQty,
         reason,
         date: new Date().toISOString().split('T')[0],
-        operator: operator || 'Current User',
+        operator: username,
         category: product.categoryRelation?.name ?? "",
         unitPrice: product.price,
         totalValue: product.price * outQty,
@@ -114,6 +125,12 @@ export async function POST(request: NextRequest) {
       },
       { transaction: t } // Pass transaction here
     );
+
+    await ActivityLog.create({
+      type: 'stock_out',
+      description: `${quantity} of ${product.name}: ${reason}`,
+      operator: username,
+    }, { transaction: t });
 
     // 5. If everything succeeded, commit the changes to the database
     await t.commit();
@@ -130,4 +147,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

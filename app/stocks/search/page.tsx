@@ -5,6 +5,7 @@ import { MainLayout } from '@/components/Layout/MainLayout';
 import { SearchIcon, FilterIcon, EyeIcon, EditIcon, PackageIcon } from 'lucide-react';
 import { Category } from '@/db/models/Category';
 import { ProductData } from '@/lib/interface';
+import { authFetch } from '@/lib/api-client';
 
 export default function StockSearchPage() {
   const [products, setProducts] = useState<ProductData[]>([]);
@@ -23,7 +24,7 @@ export default function StockSearchPage() {
 
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/products');
+        const response = await authFetch('/api/products');
         if (response.ok) {
           const data = await response.json();
           setProducts(data);
@@ -41,7 +42,7 @@ export default function StockSearchPage() {
   useEffect(() => {
     const fetchCategoriesData = async () => {
       try {
-        const response = await fetch('/api/categories');
+        const response = await authFetch('/api/categories');
         if (response.ok) {
           const data = await response.json();
           setCategoriesData(data);

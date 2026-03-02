@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Category } from '@/db/models/Category';
 import { connectDatabase, sequelize } from '@/db/config/database';
+import { ActivityLog } from '@/db/models/ActivityLog';
+import { withAuth } from '@/lib/middleware';
+import { JWTPayload } from '@/lib/auth';
 
 // GET all categories
-export async function GET() {
+// export async function POST(request: NextRequest) {}
+
+// export const GET = withAuth(async (request: NextRequest & { user: JWTPayload }) => {
+export const GET = withAuth(async (request, { user, params }) => {
   try {
-      await connectDatabase();
+    await connectDatabase();
     const categories = await sequelize.models.Category.findAll({
       include: [
         {
@@ -28,10 +34,11 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
 
 // POST new category
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, { user, params }) => {
+
   try {
     const { name, parent_id, is_active } = await request.json();
 
@@ -42,11 +49,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-      await connectDatabase();
+    await connectDatabase();
     const category = await Category.create({
       name,
       parent_id: parent_id || null,
       is_active: is_active !== undefined ? is_active : true
+    });
+
+    // Log the login activity
+    await ActivityLog.create({
+      type: 'category_added',
+      description: `New Category Added: ${category.name} `,
+      operator: 'admin'
     });
 
     return NextResponse.json(category, { status: 201 });
@@ -57,4 +71,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

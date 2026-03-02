@@ -10,6 +10,8 @@ import {
   FolderIcon,
   AlertTriangleIcon
 } from 'lucide-react';
+import { authFetch } from '@/lib/api-client';
+import Link from 'next/link';
 
 interface DashboardStats {
   totalProducts: number;
@@ -45,62 +47,32 @@ export default function DashboardPage() {
 
     // Mock data - replace with API calls
     const mockStats: DashboardStats = {
-      totalProducts: 156,
-      totalCategories: 12,
-      lowStockItems: 8,
-      totalValue: 245678.90,
-      todayStockIn: 25,
-      todayStockOut: 18
+      totalProducts: 0,
+      totalCategories: 0,
+      lowStockItems: 0,
+      totalValue: 0,
+      todayStockIn: 0,
+      todayStockOut: 0
     };
-
-    const mockActivity: RecentActivity[] = [
-      {
-        id: 1,
-        type: 'stock_out',
-        description: '5 units of iPhone 15 Pro Max - Sale',
-        timestamp: '2024-01-15 14:30',
-        operator: 'John Doe'
-      },
-      {
-        id: 2,
-        type: 'stock_in',
-        description: '10 units of Samsung Galaxy S24 Ultra added',
-        timestamp: '2024-01-15 13:15',
-        operator: 'Jane Smith'
-      },
-      {
-        id: 3,
-        type: 'new_product',
-        description: 'New product added: MacBook Pro 16"',
-        timestamp: '2024-01-15 11:45',
-        operator: 'Mike Johnson'
-      },
-      {
-        id: 4,
-        type: 'category_added',
-        description: 'New category added: Gaming Accessories',
-        timestamp: '2024-01-15 10:30',
-        operator: 'Sarah Wilson'
-      },
-      {
-        id: 5,
-        type: 'stock_out',
-        description: '2 units of iPad Pro 12.9" - Damage',
-        timestamp: '2024-01-15 09:20',
-        operator: 'Tom Brown'
-      }
-    ];
-
-    // setStats(mockStats);
-    setRecentActivity(mockActivity);
-    // setIsLoading(false);
 
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/dashboard/stats');
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
+
+        // Fetching both Stats and Activity in parallel
+        const [statsRes, activityRes] = await Promise.all([
+          authFetch('/api/dashboard/stats'),
+          authFetch(`/api/activities?limit=${20}`)
+        ]);
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStats(statsData);
+        }
+
+        if (activityRes.ok) {
+          const activityData = await activityRes.json();
+          // CHANGE THIS LINE:
+          setRecentActivity(activityData.activities || []);
         }
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -218,6 +190,40 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Quick Actions */}
+        <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+          <h2 className="text-xl font-bold text-white mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <a
+              href="/stocks/add"
+              className="flex items-center justify-center p-4 bg-blue-900 hover:bg-blue-800 rounded-lg transition-colors"
+            >
+              <PackageIcon className="h-5 w-5 text-blue-300 mr-2" />
+              <span className="text-blue-300 font-medium">Add New Stock</span>
+            </a>
+            <a
+              href="/stock-out/new"
+              className="flex items-center justify-center p-4 bg-red-900 hover:bg-red-800 rounded-lg transition-colors"
+            >
+              <TrendingDownIcon className="h-5 w-5 text-red-300 mr-2" />
+              <span className="text-red-300 font-medium">Stock Out</span>
+            </a>
+            <a
+              href="/categories/add"
+              className="flex items-center justify-center p-4 bg-purple-900 hover:bg-purple-800 rounded-lg transition-colors"
+            >
+              <FolderIcon className="h-5 w-5 text-purple-300 mr-2" />
+              <span className="text-purple-300 font-medium">Add Category</span>
+            </a>
+            <a
+              href="/stocks/search"
+              className="flex items-center justify-center p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <PackageIcon className="h-5 w-5 text-gray-300 mr-2" />
+              <span className="text-gray-300 font-medium">Search Products</span>
+            </a>
+          </div>
+        </div>
         {/* Today's Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Stock Movement */}
@@ -261,8 +267,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <p className={`text-2xl font-bold ${stats.todayStockIn - stats.todayStockOut >= 0
-                    ? 'text-green-400'
-                    : 'text-red-400'
+                  ? 'text-green-400'
+                  : 'text-red-400'
                   }`}>
                   {stats.todayStockIn - stats.todayStockOut > 0 ? '+' : ''}{stats.todayStockIn - stats.todayStockOut}
                 </p>
@@ -271,65 +277,43 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-            <h2 className="text-xl font-bold text-white mb-6">Recent Activity</h2>
-            <div className="space-y-3">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-800 rounded-lg">
-                  <div className="p-2 bg-gray-700 rounded-lg mt-1">
-                    {getActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-white text-sm">{activity.description}</p>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getActivityColor(activity.type)}`}>
-                        {activity.type.replace('_', ' ')}
-                      </span>
-                      <span className="text-gray-400 text-xs">{activity.timestamp}</span>
-                      <span className="text-gray-400 text-xs">by {activity.operator}</span>
+
+          <div className="bg-gray-900 rounded-xl border border-gray-800 flex flex-col h-full lg:max-h-[600px] max-h-[400px] overflow-y-auto mb-10">
+            <div className="p-6 border-b border-gray-800 flex items-center justify-between bg-gray-900/50 sticky top-0 rounded-t-xl z-10">
+              <h2 className="text-lg font-bold text-white">Recent Activity</h2>
+              <Link href="/activities" className="text-xs text-blue-400 hover:underline">
+                View All
+              </Link>
+            </div>
+
+            <div className="p-4 overflow-y-auto space-y-4 custom-scrollbar">
+              {recentActivity.length > 0 ? (
+                recentActivity.map((activity) => (
+                  <div key={activity.id} className="group p-3 hover:bg-gray-800/50 rounded-lg transition-all border border-transparent hover:border-gray-700">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-gray-800 rounded-lg shrink-0 group-hover:bg-gray-700">
+                        {getActivityIcon(activity.type)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-gray-200 text-sm leading-tight line-clamp-2">{activity.description}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${getActivityColor(activity.type)}`}>
+                            {activity.type.replace('_', ' ')}
+                          </span>
+                          <span className="text-[10px] text-gray-500">{activity.timestamp}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-center text-gray-500 py-10 text-sm">No recent activity</p>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-          <h2 className="text-xl font-bold text-white mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <a
-              href="/stocks/add"
-              className="flex items-center justify-center p-4 bg-blue-900 hover:bg-blue-800 rounded-lg transition-colors"
-            >
-              <PackageIcon className="h-5 w-5 text-blue-300 mr-2" />
-              <span className="text-blue-300 font-medium">Add New Stock</span>
-            </a>
-            <a
-              href="/stock-out/new"
-              className="flex items-center justify-center p-4 bg-red-900 hover:bg-red-800 rounded-lg transition-colors"
-            >
-              <TrendingDownIcon className="h-5 w-5 text-red-300 mr-2" />
-              <span className="text-red-300 font-medium">Stock Out</span>
-            </a>
-            <a
-              href="/categories/add"
-              className="flex items-center justify-center p-4 bg-purple-900 hover:bg-purple-800 rounded-lg transition-colors"
-            >
-              <FolderIcon className="h-5 w-5 text-purple-300 mr-2" />
-              <span className="text-purple-300 font-medium">Add Category</span>
-            </a>
-            <a
-              href="/stocks/search"
-              className="flex items-center justify-center p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <PackageIcon className="h-5 w-5 text-gray-300 mr-2" />
-              <span className="text-gray-300 font-medium">Search Products</span>
-            </a>
-          </div>
         </div>
       </div>
-    </MainLayout>
+    </MainLayout >
   );
 }

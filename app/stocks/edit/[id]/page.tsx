@@ -6,6 +6,7 @@ import { ArrowLeftIcon, SaveIcon, PlusIcon, XIcon, Loader2 } from 'lucide-react'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ProductData, Specification } from '@/lib/interface';
+import { authFetch } from '@/lib/api-client';
 
 interface Category {
     id: number;
@@ -50,8 +51,8 @@ export default function EditStockPage({ params }: { params: Promise<{ id: string
         const fetchData = async () => {
             try {
                 const [prodRes, catRes] = await Promise.all([
-                    fetch(`/api/products/${id}`),
-                    fetch('/api/categories')
+                    authFetch(`/api/products/${id}`),
+                    authFetch('/api/categories')
                 ]);
 
                 if (prodRes.ok && catRes.ok) {
@@ -101,9 +102,8 @@ export default function EditStockPage({ params }: { params: Promise<{ id: string
         setIsSaving(true);
 
         try {
-            const response = await fetch(`/api/products/${id}`, {
+            const response = await authFetch(`/api/products/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
                     specifications: showSpecifications ? formData.specification : null

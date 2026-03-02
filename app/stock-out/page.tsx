@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { ArrowUpRightIcon, HistoryIcon, SearchIcon, FilterIcon, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
+import { authFetch } from '@/lib/api-client';
 
 interface StockOutRecord {
   id: number;
@@ -30,10 +31,12 @@ export default function StockOutPage() {
     // Fetch real data from API
     const fetchStockOutRecords = async () => {
       try {
-        const response = await fetch('/api/stock-out');
+        const response = await authFetch('/api/stock-out', {
+            method: 'GET',
+        });
         if (response.ok) {
-          const data = await response.json();
-          setStockOutRecords(data);
+            const data = await response.json();
+            setStockOutRecords(data);
         }
       } catch (error) {
         console.error('Error fetching stock out records:', error);

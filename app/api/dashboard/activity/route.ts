@@ -6,7 +6,7 @@ export async function GET() {
     try {
         await connectDatabase();
         const activities = await ActivityLog.findAll({
-            limit: 10,
+            limit: 20,
             order: [['createdAt', 'DESC']],
         });
 

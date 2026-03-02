@@ -34,6 +34,8 @@ export default function LoginPage() {
 
       if (response.ok) {
         const result = await response.json();
+        console.log("Login Result:", result);
+        console.log("Login Result Token:", result.token);
         
         // Store token and user info
         localStorage.setItem('token', result.token);

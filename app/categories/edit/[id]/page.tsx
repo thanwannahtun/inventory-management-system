@@ -5,13 +5,14 @@ import { MainLayout } from '@/components/Layout/MainLayout';
 import { ArrowLeftIcon, SaveIcon, Loader2, XCircleIcon, LayersIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { authFetch } from '@/lib/api-client';
 
 interface Category {
   id: number;
   name: string;
   parent_id: number | null;
   is_active: boolean;
-  children : Category[];
+  children: Category[];
 }
 
 export default function EditCategoryPage({ params }: { params: Promise<{ id: string }> }) {
@@ -32,8 +33,8 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
   const fetchData = async () => {
     try {
       const [catRes, allCatsRes] = await Promise.all([
-        fetch(`/api/categories/${id}`),
-        fetch('/api/categories')
+        authFetch(`/api/categories/${id}`),
+        authFetch('/api/categories')
       ]);
 
       if (catRes.ok && allCatsRes.ok) {
@@ -49,9 +50,9 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
         // Subcategories: logic filter where parent_id matches current ID
         // setSubCategories(allCategories.filter((c: Category) => c.parent_id === parseInt(id)));
         setSubCategories((currentCategory as Category).children);
-        
+
         // Dropdown: exclude current category and its direct children to prevent circular loops
-        setCategoriesData(allCategories.filter((c: Category) => 
+        setCategoriesData(allCategories.filter((c: Category) =>
           c.id !== parseInt(id) && c.parent_id !== parseInt(id)
         ));
       }
@@ -71,15 +72,14 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
     if (!confirm('Are you sure you want to move this subcategory to the Root level?')) return;
 
     try {
-      const response = await fetch(`/api/categories/${childId}`, {
+      const response = await authFetch(`/api/categories/${childId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ parent_id: null }), // Remove the link
       });
 
       if (response.ok) {
         // Refresh local data to show the child has been removed from the list
-        fetchData(); 
+        fetchData();
       }
     } catch (error) {
       alert('Failed to detach subcategory');
@@ -98,9 +98,8 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
     e.preventDefault();
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/categories/${id}`, {
+      const response = await authFetch(`/api/categories/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           parent_id: formData.parent_id ? parseInt(formData.parent_id) : null,
@@ -229,8 +228,8 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
                 </div>
               )}
             </div>
-            
-            <Link 
+
+            <Link
               href={`/categories/add?parent_id=${id}`}
               className="mt-6 block text-center py-2 px-4 border border-dashed border-gray-700 rounded-lg text-sm text-gray-400 hover:text-blue-400 hover:border-blue-400 transition-all"
             >
