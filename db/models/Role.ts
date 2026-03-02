@@ -15,7 +15,10 @@ interface RoleAttributes {
 
 interface RoleCreationAttributes extends Optional<RoleAttributes, 'id' | 'description' | 'createdAt' | 'updatedAt'> { }
 
-@Table
+@Table({
+    tableName: 'roles',
+    modelName: 'Role'
+})
 export class Role extends Model<RoleAttributes, RoleCreationAttributes> {
     @Column({ type: DataType.STRING, allowNull: false, unique: true })
     declare name: string;

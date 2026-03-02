@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Role } from '@/db/models/Role';
+import { connectDatabase } from '@/db/config/database';
 
 // GET all roles
 export async function GET() {
   try {
+      await connectDatabase();
     const roles = await Role.findAll({
       where: {
         isActive: true

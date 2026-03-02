@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Category } from '@/db/models/Category';
-import { sequelize } from '@/db/config/database';
+import { connectDatabase, sequelize } from '@/db/config/database';
 
 // GET all categories
 export async function GET() {
   try {
+      await connectDatabase();
     const categories = await sequelize.models.Category.findAll({
       include: [
         {
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+      await connectDatabase();
     const category = await Category.create({
       name,
       parent_id: parent_id || null,

@@ -22,7 +22,10 @@ interface SpecificationAttributes {
 
 interface SpecificationCreationAttributes extends Optional<SpecificationAttributes, 'id'> { }
 
-@Table
+@Table({
+    tableName: 'specifications',
+    modelName: 'Specification'
+})
 export class Specification extends Model<SpecificationAttributes, SpecificationCreationAttributes> {
     @Column({ type: DataType.STRING, allowNull: true })
     declare model?: string | null;

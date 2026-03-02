@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { User } from '@/db/models/User';
 import { Role } from '@/db/models/Role';
-import { sequelize } from '@/db/config/database';
+import { connectDatabase, } from '@/db/config/database';
 
 // GET single user
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await User.findByPk(parseInt(params.id), {
+    const { id } = await params;
+    await connectDatabase();
+    const user = await User.findByPk(parseInt(id), {
       include: [
         {
           model: Role,
@@ -40,20 +42,21 @@ export async function GET(
 // PUT update user
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { 
-      username, 
-      email, 
-      firstName, 
-      lastName, 
-      roleId, 
+    const { id } = await params;
+    const {
+      username,
+      email,
+      firstName,
+      lastName,
+      roleId,
       isActive,
-      password 
+      password
     } = await request.json();
-
-    const user = await User.findByPk(parseInt(params.id));
+    await connectDatabase();
+    const user = await User.findByPk(parseInt(id));
 
     if (!user) {
       return NextResponse.json(
@@ -94,14 +97,15 @@ export async function PUT(
 // DELETE user
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  
+
   try {
-      // asynchronous access of `params.id` in client.
-  // const { id } = React.use(params)
+    // asynchronous access of `params.id` in client.
+    // const { id } = React.use(params)
     // asynchronous access of `params.id`.
-  const { id } = await params;
+    const { id } = await params;
+    await connectDatabase();
     const user = await User.findByPk(parseInt(id));
 
     if (!user) {

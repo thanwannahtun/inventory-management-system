@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { ArrowUpRightIcon, HistoryIcon, SearchIcon, FilterIcon, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -37,58 +37,6 @@ export default function StockOutPage() {
         }
       } catch (error) {
         console.error('Error fetching stock out records:', error);
-        // Fallback to mock data
-        const mockRecords: StockOutRecord[] = [
-          {
-            id: 1,
-            productId: 1,
-            productName: 'iPhone 15 Pro Max',
-            quantity: 5,
-            reason: 'Sale',
-            date: '2024-01-15',
-            operator: 'John Doe',
-            category: 'SmartPhone Category',
-            unitPrice: 1199.99,
-            totalValue: 5999.95
-          },
-          {
-            id: 2,
-            productId: 2,
-            productName: 'Samsung Galaxy S24 Ultra',
-            quantity: 3,
-            reason: 'Return',
-            date: '2024-01-14',
-            operator: 'Jane Smith',
-            category: 'SmartPhone Category',
-            unitPrice: 1299.99,
-            totalValue: 3899.97
-          },
-          {
-            id: 3,
-            productId: 3,
-            productName: 'MacBook Pro 16"',
-            quantity: 2,
-            reason: 'Damage',
-            date: '2024-01-13',
-            operator: 'Mike Johnson',
-            category: 'Laptop Category',
-            unitPrice: 2499.99,
-            totalValue: 4999.98
-          },
-          {
-            id: 4,
-            productId: 4,
-            productName: 'iPad Pro 12.9"',
-            quantity: 1,
-            reason: 'Transfer',
-            date: '2024-01-12',
-            operator: 'Sarah Wilson',
-            category: 'Tablet Category',
-            unitPrice: 1099.99,
-            totalValue: 1099.99
-          }
-        ];
-        setStockOutRecords(mockRecords);
       } finally {
         setIsLoading(false);
       }
@@ -97,18 +45,39 @@ export default function StockOutPage() {
     fetchStockOutRecords();
   }, []);
 
-  const filteredRecords = stockOutRecords.filter(record => {
-    const matchesSearch = record.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.operator.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesReason = !selectedReason || record.reason === selectedReason;
-    const matchesDate = (!dateRange.start || record.date >= dateRange.start) &&
-                      (!dateRange.end || record.date <= dateRange.end);
-    
-    return matchesSearch && matchesReason && matchesDate;
-  });
+  // 1. Logic for filtered records (used in table)
+  const filteredRecords = useMemo(() => {
+    return stockOutRecords.filter(record => {
+      const matchesSearch = record.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.operator.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesReason = !selectedReason || record.reason === selectedReason;
+      const matchesDate = (!dateRange.start || record.date >= dateRange.start) &&
+        (!dateRange.end || record.date <= dateRange.end);
 
-  const totalQuantity = filteredRecords.reduce((sum, record) => sum + record.quantity, 0);
-  const totalValue = filteredRecords.reduce((sum, record) => sum + record.totalValue, 0);
+      return matchesSearch && matchesReason && matchesDate;
+    });
+  }, [stockOutRecords, searchTerm, selectedReason, dateRange]);
+
+  // 2. Logic for Statistics Cards (Dynamic Calculations)
+  // 2. Logic for Statistics Cards (Dynamic Calculations)
+  const stats = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Calculate Today's Stock Out (Filtered by today's date)
+    const todayRecords = stockOutRecords.filter(r => r.date === todayStr);
+    const stockOutToday = todayRecords.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
+
+    // Calculate Total Quantity and Value (Based on current filters)
+    const totalQty = filteredRecords.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
+
+    // FIX: Force totalValue to be a Number during reduction
+    const totalVal = filteredRecords.reduce((sum, r) => {
+      const val = parseFloat(r.totalValue as any) || 0;
+      return sum + val;
+    }, 0);
+
+    return { stockOutToday, totalQty, totalVal };
+  }, [stockOutRecords, filteredRecords]);
 
   if (isLoading) {
     return (
@@ -140,11 +109,10 @@ export default function StockOutPage() {
           <nav className="flex space-x-8">
             <button
               onClick={() => setActiveTab('operations')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'operations'
-                  ? 'border-blue-500 text-white'
-                  : 'border-transparent text-gray-400 hover:text-gray-300'
-              }`}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'operations'
+                ? 'border-blue-500 text-white'
+                : 'border-transparent text-gray-400 hover:text-gray-300'
+                }`}
             >
               <div className="flex items-center space-x-2">
                 <ArrowUpRightIcon className="h-4 w-4" />
@@ -153,11 +121,10 @@ export default function StockOutPage() {
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === 'history'
-                  ? 'border-blue-500 text-white'
-                  : 'border-transparent text-gray-400 hover:text-gray-300'
-              }`}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'history'
+                ? 'border-blue-500 text-white'
+                : 'border-transparent text-gray-400 hover:text-gray-300'
+                }`}
             >
               <div className="flex items-center space-x-2">
                 <HistoryIcon className="h-4 w-4" />
@@ -169,42 +136,51 @@ export default function StockOutPage() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Today's Activity */}
           <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Total Stock Out Today</p>
-                <p className="text-2xl font-bold text-white mt-1">12 units</p>
+                <p className="text-2xl font-bold text-white mt-1">{stats.stockOutToday} units</p>
               </div>
-              <div className="p-3 bg-red-900 rounded-lg">
+              <div className="p-3 bg-red-900/30 rounded-lg">
                 <ArrowUpRightIcon className="h-6 w-6 text-red-400" />
               </div>
             </div>
           </div>
 
+          {/* Card 2: Quantity in View */}
           <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Total Quantity</p>
-                <p className="text-2xl font-bold text-white mt-1">{totalQuantity} units</p>
+                <p className="text-gray-400 text-sm">Filtered Quantity</p>
+                <p className="text-2xl font-bold text-white mt-1">{stats.totalQty} units</p>
               </div>
-              <div className="p-3 bg-blue-900 rounded-lg">
+              <div className="p-3 bg-blue-900/30 rounded-lg">
                 <PlusIcon className="h-6 w-6 text-blue-400" />
               </div>
             </div>
           </div>
 
+          {/* Card 3: Value in View */}
           <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-400 text-sm">Total Value</p>
-                <p className="text-2xl font-bold text-white mt-1">${Number(totalValue).toFixed(2)}</p>
+                <p className="text-gray-400 text-sm">Filtered Total Value</p>
+                <p className="text-2xl font-bold text-white mt-1">
+                  ${Number(stats.totalVal || 0).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })}
+                </p>
               </div>
-              <div className="p-3 bg-green-900 rounded-lg">
+              <div className="p-3 bg-green-900/30 rounded-lg">
                 <span className="text-green-400 font-bold text-lg">$</span>
               </div>
             </div>
           </div>
         </div>
+
 
         {/* Filters */}
         <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
@@ -305,13 +281,12 @@ export default function StockOutPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        record.reason === 'Sale' ? 'bg-green-900 text-green-300' :
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${record.reason === 'Sale' ? 'bg-green-900 text-green-300' :
                         record.reason === 'Return' ? 'bg-blue-900 text-blue-300' :
-                        record.reason === 'Damage' ? 'bg-red-900 text-red-300' :
-                        record.reason === 'Transfer' ? 'bg-yellow-900 text-yellow-300' :
-                        'bg-gray-900 text-gray-300'
-                      }`}>
+                          record.reason === 'Damage' ? 'bg-red-900 text-red-300' :
+                            record.reason === 'Transfer' ? 'bg-yellow-900 text-yellow-300' :
+                              'bg-gray-900 text-gray-300'
+                        }`}>
                         {record.reason}
                       </span>
                     </td>

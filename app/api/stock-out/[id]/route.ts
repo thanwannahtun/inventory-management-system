@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { StockOut } from '@/db/models/StockOut';
 import { Product } from '@/db/models/Product';
+import { connectDatabase } from '@/db/config/database';
 
 // GET single stock out record
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const stockOutRecord = await StockOut.findByPk(parseInt(params.id), {
+    await connectDatabase();
+    const { id } = await params;
+
+    const stockOutRecord = await StockOut.findByPk(parseInt(id), {
       include: [
         {
           model: Product,
@@ -38,12 +42,15 @@ export async function GET(
 // PUT update stock out record
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await connectDatabase();
+    const { id } = await params;
+
     const { quantity, reason, notes, operator } = await request.json();
 
-    const stockOutRecord = await StockOut.findByPk(parseInt(params.id));
+    const stockOutRecord = await StockOut.findByPk(parseInt(id));
 
     if (!stockOutRecord) {
       return NextResponse.json(
@@ -72,10 +79,12 @@ export async function PUT(
 // DELETE stock out record
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const stockOutRecord = await StockOut.findByPk(parseInt(params.id));
+    await connectDatabase();
+    const { id } = await params;
+    const stockOutRecord = await StockOut.findByPk(parseInt(id));
 
     if (!stockOutRecord) {
       return NextResponse.json(

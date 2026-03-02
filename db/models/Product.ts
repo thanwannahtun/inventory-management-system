@@ -18,7 +18,10 @@ interface ProductAttributes {
 
 interface ProductCreationAttributes extends Optional<ProductAttributes, 'id' | 'image' | 'color' | 'storage' | 'ram'> { }
 
-@Table
+@Table({
+    tableName: 'products',
+    modelName: 'Product'
+})
 export class Product extends Model<ProductAttributes, ProductCreationAttributes> {
     @Column({ type: DataType.STRING, allowNull: false })
     declare name: string;

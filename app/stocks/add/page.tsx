@@ -12,31 +12,32 @@ interface Category {
   parent_id?: number;
   is_active: boolean;
 }
+const INITIAL_FORM_STATE: ProductData = {
+  name: '',
+  price: 0,
+  quantity: 0,
+  color: '',
+  storage: '',
+  ram: '',
+  category: 0,
+  specification: {
+    model: '',
+    display: '',
+    resolution: '',
+    os: '',
+    chipset: '',
+    main_camera: '',
+    selfie_camera: '',
+    battery: '',
+    charging: '',
+    charging_port: '',
+    weight: '',
+    dimensions: ''
+  },
+};
 
 export default function AddStockPage() {
-  const [formData, setFormData] = useState<ProductData>({
-    name: '',
-    price: 0,
-    quantity: 0,
-    color: '',
-    storage: '',
-    ram: '',
-    category: 0,
-    specification: {
-      model: '',
-      display: '',
-      resolution: '',
-      os: '',
-      chipset: '',
-      main_camera: '',
-      selfie_camera: '',
-      battery: '',
-      charging: '',
-      charging_port: '',
-      weight: '',
-      dimensions: ''
-    },
-  });
+  const [formData, setFormData] = useState<ProductData>(INITIAL_FORM_STATE);
 
   const [showSpecifications, setShowSpecifications] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -60,7 +61,7 @@ export default function AddStockPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
+
     if (name.startsWith('spec_')) {
       const specField = name.replace('spec_', '');
       setFormData(prev => ({
@@ -80,7 +81,7 @@ export default function AddStockPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!formData.name || !formData.price || !formData.quantity || !formData.category) {
       alert('Please fill in all required fields');
@@ -113,10 +114,12 @@ export default function AddStockPage() {
       if (response.ok) {
         const result = await response.json();
         console.log('Product saved successfully:', result);
-        
+
         // Show success message and redirect
         alert('Product added successfully!');
-        // window.location.href = '/stocks/search';
+        setFormData(INITIAL_FORM_STATE); // Clear the form
+        setShowSpecifications(false);    // Hide specs section
+
       } else {
         const error = await response.json();
         alert(`Error: ${error.error}`);
@@ -150,7 +153,7 @@ export default function AddStockPage() {
           {/* Basic Information */}
           <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
             <h2 className="text-xl font-bold text-white mb-6">Basic Information</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Product Name */}
               <div className="md:col-span-2">

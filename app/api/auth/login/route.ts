@@ -1,5 +1,9 @@
+import { connectDatabase, sequelize } from '@/db/config/database';
+import { Role } from '@/db/models/Role';
+import { User } from '@/db/models/User';
+import bcrypt from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
-
+import Op from 'sequelize/lib/operators';
 // Mock user data for demo purposes
 const mockUsers = [
   {
@@ -19,66 +23,42 @@ const mockUsers = [
       isActive: true
     }
   },
-  {
-    id: 2,
-    username: 'user',
-    email: 'user@example.com',
-    password: 'user123',
-    firstName: 'Regular',
-    lastName: 'User',
-    roleId: 2,
-    isActive: true,
-    role: {
-      id: 2,
-      name: 'User',
-      description: 'Regular user',
-      permissions: JSON.stringify(['read', 'write']),
-      isActive: true
-    }
-  }
 ];
 
 export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json();
 
-    // Find user by username or email
-    const user = mockUsers.find(u => 
-      u.username === username || u.email === username
-    );
+    await connectDatabase();
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+    const userInstance = await User.findOne({
+      where: {
+        [Op.or]: [{ username: username }, { email: username }] // Allow email login too
+      }
+    });
+
+    if (!userInstance) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Check if user is active
-    if (!user.isActive) {
-      return NextResponse.json(
-        { error: 'Account is deactivated' },
-        { status: 401 }
-      );
+    if (!userInstance.isActive) {
+      return NextResponse.json({ error: 'Account is deactivated' }, { status: 401 });
     }
 
-    // Simple password check (in production, use bcrypt)
-    if (user.password !== password) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+    const isPasswordValid = await bcrypt.compare(password, userInstance.password);
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Generate a simple token (in production, use JWT)
+    // FIXED: Convert to plain object BEFORE destructuring/returning
+    const user = userInstance.get({ plain: true });
+
     const token = btoa(JSON.stringify({
       userId: user.id,
       username: user.username,
-      roleId: user.roleId,
-      exp: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+      exp: Date.now() + 24 * 60 * 60 * 1000
     }));
 
-    // Return user info without password
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json({
@@ -89,9 +69,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

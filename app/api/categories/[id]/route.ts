@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Category } from '@/db/models/Category';
-import { sequelize } from '@/db/config/database';
+import { connectDatabase, sequelize } from '@/db/config/database';
 
 // GET single category
 export async function GET(
@@ -48,7 +48,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-
+      await connectDatabase();
     // const category = await sequelize.models.Category.findByPk(id);
     const category = await Category.findByPk(id);
 
@@ -82,7 +82,8 @@ export async function DELETE(
 ) {
   try {
      const { id } = await params;
-    const category = await sequelize.models.Category.findByPk(id);
+       await connectDatabase();
+    const category = await Category.findByPk(id);
 
     if (!category) {
       return NextResponse.json(

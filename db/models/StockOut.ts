@@ -19,7 +19,10 @@ interface StockOutAttributes {
 
 interface StockOutCreationAttributes extends Optional<StockOutAttributes, 'id' | 'notes'> { }
 
-@Table
+@Table({
+    tableName: 'stockouts',
+    modelName: 'StockOut'
+})
 export class StockOut extends Model<StockOutAttributes, StockOutCreationAttributes> {
     @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true })
     declare id: number;

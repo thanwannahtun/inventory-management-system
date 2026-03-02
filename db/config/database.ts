@@ -1,16 +1,21 @@
 import { Sequelize } from 'sequelize-typescript';
 import { Category } from '../models/Category';
 import { Product } from '../models/Product';
-import dotenv from 'dotenv';
 import { Specification } from '../models/Specification';
 import { Role } from '../models/Role';
 import { User } from '../models/User';
 import { StockOut } from '../models/StockOut';
+import { ActivityLog } from '../models/ActivityLog';
 
-dotenv.config();
+// 1. Ensure the Sequelize instance is a singleton
+const globalForDb = global as unknown as {
+    sequelize: Sequelize;
+    connectionPromise: Promise<void> | null;
+};
+
 
 /// local
-export const sequelize = new Sequelize({
+export const sequelize = globalForDb.sequelize || new Sequelize({
     host: process.env.DB_HOST || 'localhost',
     username: process.env.DB_USERNAME || 'admin_user',
     password: process.env.DB_PASSWORD || '',
@@ -23,9 +28,12 @@ export const sequelize = new Sequelize({
         Specification,
         Role,
         User,
-        StockOut
+        StockOut,
+        ActivityLog
     ]
 });
+
+if (process.env.NODE_ENV !== 'production') globalForDb.sequelize = sequelize;
 
 // sequelize.addModels([
 //     Category,
@@ -35,16 +43,26 @@ export const sequelize = new Sequelize({
 //     User,
 //     StockOut
 // ])
-
 export async function connectDatabase() {
-    try {
-        await sequelize.authenticate();
-        await sequelize.sync({alter:true});
+    // 2. Use the global object to persist the promise during dev hot-reloads
+    if (globalForDb.connectionPromise) return globalForDb.connectionPromise;
 
-        console.log('✨ Database connected');
-    } catch (err) {
-        console.error('❌ DB Error:', err);
-    }
+    globalForDb.connectionPromise = (async () => {
+        try {
+            await sequelize.authenticate();
+
+            // 3. Strict Sync: Only run in local development
+            if (process.env.NODE_ENV === 'development') {
+                await sequelize.sync({ alter: true });
+            }
+
+            console.log('✨ DB Connected');
+        } catch (err) {
+            globalForDb.connectionPromise = null;
+            console.error('❌ DB Error:', err);
+            throw err;
+        }
+    })();
+
+    return globalForDb.connectionPromise;
 }
-
-

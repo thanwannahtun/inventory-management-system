@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/Layout/MainLayout';
-import { 
-  PackageIcon, 
-  TrendingUpIcon, 
-  TrendingDownIcon, 
+import {
+  PackageIcon,
+  TrendingUpIcon,
+  TrendingDownIcon,
   DollarSignIcon,
   FolderIcon,
   AlertTriangleIcon
@@ -42,6 +42,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+
     // Mock data - replace with API calls
     const mockStats: DashboardStats = {
       totalProducts: 156,
@@ -90,9 +91,27 @@ export default function DashboardPage() {
       }
     ];
 
-    setStats(mockStats);
+    // setStats(mockStats);
     setRecentActivity(mockActivity);
-    setIsLoading(false);
+    // setIsLoading(false);
+
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/dashboard/stats');
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+
+        setStats(mockStats);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStats();
   }, []);
 
   if (isLoading) {
@@ -241,11 +260,10 @@ export default function DashboardPage() {
                     <p className="text-gray-400 text-sm">Difference in stock</p>
                   </div>
                 </div>
-                <p className={`text-2xl font-bold ${
-                  stats.todayStockIn - stats.todayStockOut >= 0 
-                    ? 'text-green-400' 
+                <p className={`text-2xl font-bold ${stats.todayStockIn - stats.todayStockOut >= 0
+                    ? 'text-green-400'
                     : 'text-red-400'
-                }`}>
+                  }`}>
                   {stats.todayStockIn - stats.todayStockOut > 0 ? '+' : ''}{stats.todayStockIn - stats.todayStockOut}
                 </p>
               </div>

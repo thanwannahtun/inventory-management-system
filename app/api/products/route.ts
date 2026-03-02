@@ -3,6 +3,7 @@ import { Product } from '@/db/models/Product';
 import { Category } from '@/db/models/Category';
 import { Specification } from '@/db/models/Specification';
 import { Op } from 'sequelize';
+import { connectDatabase, sequelize } from '@/db/config/database';
 
 // GET all products with filtering
 export async function GET(request: NextRequest) {
@@ -78,7 +79,12 @@ export async function GET(request: NextRequest) {
 
 // POST new product
 export async function POST(request: NextRequest) {
+  // 1. Initialize the transaction
+  let t;
+
   try {
+    await connectDatabase();
+    t = await sequelize.transaction();
     const {
       name,
       price,
@@ -90,13 +96,16 @@ export async function POST(request: NextRequest) {
       specifications
     } = await request.json();
 
+    // Validation (Rollback if fails)
     if (!name || !price || !quantity || !category) {
+      await t.rollback();
       return NextResponse.json(
         { error: 'Name, price, quantity, and category are required' },
         { status: 400 }
       );
     }
 
+    // 2. Create the Product within the transaction
     const product = await Product.create({
       name,
       price: parseFloat(price),
@@ -105,20 +114,25 @@ export async function POST(request: NextRequest) {
       storage: storage || null,
       ram: ram || null,
       category: parseInt(category)
-    });
+    }, { transaction: t });
 
-    // If specifications provided, create them
+    // 3. Create Specifications within the same transaction
     if (specifications) {
       await Specification.create({
         ...specifications,
-        // You might want to link this to the product if needed
         product_id: product.id,
-
-      });
+      }, { transaction: t });
     }
 
+    // 4. Everything worked? Commit the changes!
+    await t.commit();
+
     return NextResponse.json(product, { status: 201 });
+
   } catch (error) {
+    // 5. If any step failed, undo everything
+    if (t) await t.rollback();
+
     console.error('Error creating product:', error);
     return NextResponse.json(
       { error: 'Failed to create product' },

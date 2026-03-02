@@ -2,44 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { User } from '@/db/models/User';
 import { Role } from '@/db/models/Role';
 import bcrypt from 'bcryptjs';
+import { connectDatabase } from '@/db/config/database';
+import { Op } from 'sequelize'; // Import Op for OR logic
 
 export async function POST(request: NextRequest) {
   try {
     const { username, email, password, firstName, lastName } = await request.json();
 
-    // Check if user already exists
+    await connectDatabase();
+
+    // FIXED: Check if EITHER username OR email exists
     const existingUser = await User.findOne({
       where: {
-        // [User.sequelize!.Op.or]: [
-        //   { username: username },
-        //   { email: email }
-        // ]
-        username: username,
-        email: email
+        [Op.or]: [{ username }, { email }]
       }
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'User already exists' },
-        { status: 400 }
-      );
+      // Professional tip: Tell them exactly which one is taken
+      const field = existingUser.username === username ? 'Username' : 'Email';
+      return NextResponse.json({ error: `${field} is already taken` }, { status: 400 });
     }
 
-    // Get default user role
     const userRole = await Role.findOne({ where: { name: 'User' } });
-    
     if (!userRole) {
-      return NextResponse.json(
-        { error: 'Default user role not found' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'System configuration error: Role not found' }, { status: 500 });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await User.create({
       username,
       email,
@@ -50,7 +41,7 @@ export async function POST(request: NextRequest) {
       isActive: true
     });
 
-    // Return user info without password
+    // Use toJSON() or get({plain: true}) to avoid circular JSON errors
     const { password: _, ...userWithoutPassword } = user.toJSON();
 
     return NextResponse.json({
@@ -60,9 +51,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Registration error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -21,7 +21,10 @@ interface UserAttributes {
 
 interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'lastLogin' | 'createdAt' | 'updatedAt'> { }
 
-@Table
+@Table({
+    tableName: 'users',
+    modelName: 'User'
+})
 export class User extends Model<UserAttributes, UserCreationAttributes> {
     @Column({ type: DataType.STRING, allowNull: false, unique: true })
     declare username: string;

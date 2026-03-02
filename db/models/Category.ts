@@ -11,7 +11,10 @@ interface CategoryAttributes {
 
 interface CategoryCreationAttributes extends Optional<CategoryAttributes, 'id' | 'parent_id'> { }
 
-@Table
+@Table({
+    tableName: 'categories',
+    modelName: 'Category'
+})
 export class Category extends Model<CategoryAttributes, CategoryCreationAttributes> {
     @Column({ type: DataType.STRING, allowNull: false })
     declare name: string;

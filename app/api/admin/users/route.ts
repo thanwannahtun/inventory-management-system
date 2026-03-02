@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { User } from '@/db/models/User';
 import { Role } from '@/db/models/Role';
 import { Op } from 'sequelize';
-import { sequelize } from '@/db/config/database';
+import bcrypt from 'bcryptjs'; // 1. Import bcrypt
+
+import { connectDatabase, sequelize } from '@/db/config/database';
 
 // GET all users with roles
 export async function GET() {
   try {
-    // const users = await User.findAll({
-    const users = await sequelize.models.User.findAll({
+    await connectDatabase();
+    const users = await User.findAll({
+      // const users = await sequelize.models.User.findAll({
       include: [
         {
           model: Role,
@@ -30,16 +33,15 @@ export async function GET() {
   }
 }
 
-// POST new user
 export async function POST(request: NextRequest) {
   try {
-    const { 
-      username, 
-      email, 
-      password, 
-      firstName, 
-      lastName, 
-      roleId 
+    const {
+      username,
+      email,
+      password,
+      firstName,
+      lastName,
+      roleId
     } = await request.json();
 
     if (!username || !email || !password || !firstName || !lastName || !roleId) {
@@ -49,13 +51,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    await connectDatabase();
+
     // Check if user already exists
-    const existingUser = await sequelize.models.User.findOne({
+    const existingUser = await User.findOne({
       where: {
-        [Op.or]: [
-          { username: username },
-          { email: email }
-        ]
+        [Op.or]: [{ username }, { email }]
       }
     });
 
@@ -66,21 +67,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user (password should be hashed in production)
-    const user = await sequelize.models.User.create({
+    // 2. Hash the password before saving
+    // Using a salt factor of 10 is standard for performance/security balance
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 3. Create user with the HASHED password
+    const user = await User.create({
       username,
       email,
-      password, // In production, hash this with bcrypt
+      password: hashedPassword, // Use the variable created above
       firstName,
       lastName,
       roleId: parseInt(roleId),
       isActive: true
     });
 
-    // Return user without password
+    // 4. Clean the response
     const { password: _, ...userWithoutPassword } = user.toJSON();
 
     return NextResponse.json(userWithoutPassword, { status: 201 });
+
   } catch (error) {
     console.error('Error creating user:', error);
     return NextResponse.json(

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Product } from '@/db/models/Product';
 import { Category } from '@/db/models/Category';
 import { Specification } from '@/db/models/Specification';
-import { sequelize } from '@/db/config/database';
+import { connectDatabase, sequelize } from '@/db/config/database';
 
 // GET single product
 export async function GET(
@@ -11,6 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await connectDatabase();
     const { id } = await params;
     const product = await sequelize.models.Product.findByPk(id, {
       include: [
@@ -53,8 +54,10 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const transaction = await sequelize.transaction(); // Start transaction
+  let transaction;
   try {
+    await connectDatabase();
+    transaction = await sequelize.transaction(); // Start transaction
     const { id } = await params;
     const body = await request.json();
 
@@ -100,7 +103,7 @@ export async function PUT(
 
     return NextResponse.json(updatedProduct);
   } catch (error) {
-    await transaction.rollback(); // Undo everything if any part fails
+    if (transaction) await transaction.rollback(); // Undo everything if any part fails
     console.error('Error updating product:', error);
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
@@ -112,6 +115,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await connectDatabase();
     const { id } = await params;
     const product = await Product.findByPk(id);
 

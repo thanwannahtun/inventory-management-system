@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Product } from '@/db/models/Product';
 import { Category } from '@/db/models/Category';
 import { Op } from 'sequelize';
+import { connectDatabase } from '@/db/config/database';
 
 // GET dashboard statistics
 export async function GET() {
   try {
+      await connectDatabase();
     // Get total products count
     const totalProducts = await Product.count();
 
