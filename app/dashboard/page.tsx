@@ -176,18 +176,35 @@ export default function DashboardPage() {
             </div>
           </div>
 
+
+
           {/* Total Value */}
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Total Value</p>
-                <p className="text-2xl font-bold text-white mt-1">${stats.totalValue.toLocaleString()}</p>
+          {/* Total Value */}
+          <div className="bg-gray-900 rounded-lg border border-gray-800 p-5 sm:p-6 min-h-[110px] flex flex-col justify-center">
+            <div className="flex items-start justify-between gap-2">
+
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-400 text-xs sm:text-sm font-medium">Total Value</p>
+
+                {/* We use 'break-all' so long numbers wrap instead of pushing the icon.
+         We also scale the text size: text-xl for huge numbers, text-2xl for normal.
+      */}
+                <p className={`
+        font-bold text-white mt-1 leading-tight break-all
+        ${stats.totalValue.toString().length > 9 ? 'text-lg' : 'text-2xl'}
+      `}>
+                  ${stats.totalValue.toLocaleString()}
+                </p>
               </div>
-              <div className="p-3 bg-green-900 rounded-lg">
-                <DollarSignIcon className="h-6 w-6 text-green-400" />
+
+              {/* Icon: shrink-0 is mandatory to prevent the text from crushing it */}
+              <div className="p-2.5 bg-green-900/50 rounded-lg shrink-0 border border-green-800/50">
+                <DollarSignIcon className="h-5 w-5 text-green-400" />
               </div>
+
             </div>
           </div>
+
         </div>
 
         {/* Quick Actions */}

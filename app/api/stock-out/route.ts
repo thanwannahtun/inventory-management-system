@@ -9,7 +9,8 @@ import { withAuth } from '@/lib/middleware';
 import { JWTPayload } from '@/lib/auth';
 
 // GET all stock out records with filtering
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest) => {
+
   try {
     await connectDatabase();
     const { searchParams } = new URL(request.url)
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
     console.error(error)
     return NextResponse.json({ error: "Failed" }, { status: 500 })
   }
-}
+});
 
 
 // POST new stock out record
@@ -60,9 +61,9 @@ export async function GET(request: NextRequest) {
 //   user: JWTPayload;
 // }) => {
 // export const POST = withAuth(async (request: NextRequest, { user }) => {
-export const POST = withAuth(async (request: NextRequest & { user: JWTPayload }) => {
+export const POST = withAuth(async (request: NextRequest, { user }) => {
 
-    const { username} = request.user;
+  const { username } = user;
 
   // export async function POST(request: NextRequest) {
   // Declare t outside so it's accessible in the catch block
