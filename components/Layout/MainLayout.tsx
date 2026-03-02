@@ -16,7 +16,8 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-black text-white flex">
+      <div className="h-screen bg-black text-white flex overflow-hidden">
+        {/* <div className="min-h-screen bg-black text-white flex overflow-hidden"> */}
         {/* Sidebar with mobile state control */}
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
@@ -30,13 +31,14 @@ export function MainLayout({ children }: MainLayoutProps) {
 
         {/* Main Content Area */}
         <div
-          className="flex-1 flex flex-col min-w-0 "
+          // className="flex-1 flex flex-col min-w-0 "
+          className="flex flex-col h-screen min-w-0 "
         // className="flex-1 flex flex-col min-w-0 lg:pl-64"
         >
           {/* Note: lg:pl-64 must match your Sidebar's desktop width */}
           <Header onMenuClick={toggleSidebar} />
 
-          <main className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
+          <main className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full overflow-y-auto">
             {children}
           </main>
         </div>
