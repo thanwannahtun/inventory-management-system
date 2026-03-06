@@ -1,8 +1,9 @@
 export interface ProductData {
   id?: number;
   name: string;
-  price: number;
-  quantity: number;
+  price: number; // Selling price
+  purchasePrice?: number; // Purchase price for FIFO
+  quantity: number; // For form validation only
   image?: string;
   color?: string;
   storage?: string;
@@ -11,8 +12,23 @@ export interface ProductData {
   categoryRelation?: {
     id: number,
     name: string
-  },
-  specification?: Specification
+  };
+  specification?: Specification;
+  stockBatches?: StockBatch[]; // For displaying stock status
+  
+  // Virtual fields from FIFO service
+  inventoryValue?: number;
+  averageCostPrice?: number;
+}
+
+export interface StockBatch {
+  id: number;
+  productId: number;
+  initialQuantity: number;
+  remainingQuantity: number;
+  purchasePrice: number;
+  receivedDate: string;
+  product?: ProductData;
 }
 
 export interface Specification {

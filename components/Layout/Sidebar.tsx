@@ -9,10 +9,11 @@ import {
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Activities', href: '/activities', icon: ActivityIcon }, // Added this for you
+  { name: 'Activities', href: '/activities', icon: ActivityIcon },
   { name: 'Search Stocks', href: '/stocks/search', icon: SearchIcon },
   { name: 'Categories', href: '/categories', icon: FolderIcon },
   { name: 'Add Stock', href: '/stocks/add', icon: PackageIcon },
+  { name: 'Stock Management', href: '/stock/manage', icon: TrendingDownIcon },
   { name: 'Stock Out', href: '/stock-out', icon: TrendingDownIcon },
   { name: 'User Management', href: '/admin/users', icon: UserIcon },
 ];

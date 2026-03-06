@@ -16,6 +16,7 @@ interface Category {
 const INITIAL_FORM_STATE: ProductData = {
   name: '',
   price: 0,
+  purchasePrice: 0, // For FIFO
   quantity: 0,
   color: '',
   storage: '',
@@ -84,8 +85,8 @@ export default function AddStockPage() {
     e.preventDefault();
 
     // Validate required fields
-    if (!formData.name || !formData.price || !formData.quantity || !formData.category) {
-      alert('Please fill in all required fields');
+    if (!formData.name || !formData.price || !formData.quantity || !formData.category || !formData.purchasePrice) {
+      alert('Please fill in all required fields including purchase price');
       return;
     }
 
@@ -96,6 +97,7 @@ export default function AddStockPage() {
       const productData = {
         name: formData.name,
         price: formData.price,
+        purchasePrice: formData.purchasePrice, // For FIFO
         quantity: formData.quantity,
         color: formData.color || null,
         storage: formData.storage || null,
@@ -196,13 +198,32 @@ export default function AddStockPage() {
               {/* Price */}
               <div>
                 <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-2">
-                  Price ($) *
+                  Selling Price ($) *
                 </label>
                 <input
                   type="number"
                   id="price"
                   name="price"
                   value={formData.price}
+                  onChange={handleInputChange}
+                  required
+                  step="0.01"
+                  min="0"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+
+              {/* Purchase Price */}
+              <div>
+                <label htmlFor="purchasePrice" className="block text-sm font-medium text-gray-300 mb-2">
+                  Purchase Price ($) * <span className="text-gray-500 text-xs">(FIFO cost tracking)</span>
+                </label>
+                <input
+                  type="number"
+                  id="purchasePrice"
+                  name="purchasePrice"
+                  value={formData.purchasePrice}
                   onChange={handleInputChange}
                   required
                   step="0.01"

@@ -7,7 +7,8 @@ import { connectDatabase, sequelize } from '@/db/config/database';
 import { withAuth } from '@/lib/middleware';
 import { JWTPayload } from '@/lib/auth';
 import { ActivityLog } from '@/db/models/ActivityLog';
-import { type } from 'os';
+import { FIFOService } from '@/services/fifoService';
+import { StockBatch } from '@/db/models/StockBatch';
 
 // GET all products with filtering
 export async function GET(request: NextRequest) {
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
       whereClause.quantity = { [Op.gt]: 0 };
     }
 
+    // Get products with stock batches and category
     const products = await Product.findAll({
       where: whereClause,
       include: [
@@ -66,12 +68,38 @@ export async function GET(request: NextRequest) {
           model: Category,
           as: 'categoryRelation',
           attributes: ['id', 'name']
+        },
+        {
+          model: StockBatch,
+          as: 'stockBatches',
+          order: [['receivedDate', 'ASC'], ['createdAt', 'ASC']]
         }
       ],
       order: [['name', 'ASC']]
     });
 
-    return NextResponse.json(products);
+    // Calculate virtual fields
+    const productsWithStock = products.map(product => {
+      const batches = product.stockBatches || [];
+      const totalQuantity = batches.reduce((sum, batch) => sum + batch.remainingQuantity, 0);
+      const totalValue = batches.reduce((sum, batch) => sum + (batch.remainingQuantity * batch.purchasePrice), 0);
+      const averageCost = totalQuantity > 0 ? totalValue / totalQuantity : 0;
+
+      // Filter out if inStockOnly and no stock
+      if (inStockOnly && totalQuantity === 0) {
+        return null;
+      }
+
+      return {
+        ...product.toJSON(),
+        quantity: totalQuantity,
+        inventoryValue: totalValue,
+        averageCostPrice: averageCost,
+        stockBatches: batches
+      };
+    }).filter(Boolean);
+
+    return NextResponse.json(productsWithStock);
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(
@@ -96,6 +124,7 @@ export const POST = withAuth(async (request, { user }) => {
       name,
       price,
       quantity,
+      purchasePrice,
       color,
       storage,
       ram,
@@ -132,6 +161,17 @@ export const POST = withAuth(async (request, { user }) => {
       }, { transaction: t });
     }
 
+    // Add stock to FIFO system
+    if (quantity > 0) {
+      const actualPurchasePrice = purchasePrice || parseFloat(price); // Default to selling price if no purchase price
+      await FIFOService.addStock(
+        product.id,
+        parseInt(quantity),
+        actualPurchasePrice,
+        username
+      );
+    }
+
     await ActivityLog.create({
       type: 'stock_in',
       description: `${quantity} units of ${product.name} added`,
@@ -141,7 +181,10 @@ export const POST = withAuth(async (request, { user }) => {
     // 4. Everything worked? Commit the changes!
     await t.commit();
 
-    return NextResponse.json(product, { status: 201 });
+    // Return product with stock information
+    const productWithStock = await FIFOService.getStockStatus(product.id);
+
+    return NextResponse.json(productWithStock, { status: 201 });
 
   } catch (error) {
     // 5. If any step failed, undo everything
