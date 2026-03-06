@@ -50,7 +50,7 @@ export default function AddStockPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories');
+      const response = await authFetch('/api/categories');
       if (response.ok) {
         const data = await response.json();
         setCategories(data);
