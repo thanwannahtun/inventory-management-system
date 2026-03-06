@@ -6,6 +6,7 @@ import { Role } from '../models/Role';
 import { User } from '../models/User';
 import { StockOut } from '../models/StockOut';
 import { ActivityLog } from '../models/ActivityLog';
+import { StockBatch } from '../models/StockBatch';
 
 // 1. Ensure the Sequelize instance is a singleton
 const globalForDb = global as unknown as {
@@ -16,10 +17,10 @@ const globalForDb = global as unknown as {
 
 /// local
 export const sequelize = globalForDb.sequelize || new Sequelize({
-    host: process.env.DB_HOST || 'localhost',
-    username: process.env.DB_USERNAME || 'admin_user',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DATABASE || 'inventory_managment_system',
+    host: process.env.DB_HOST,
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DATABASE,
     dialect: "mysql",
     port: 3306,
     models: [
@@ -29,7 +30,8 @@ export const sequelize = globalForDb.sequelize || new Sequelize({
         Role,
         User,
         StockOut,
-        ActivityLog
+        ActivityLog,
+        StockBatch
     ]
 });
 

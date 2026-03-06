@@ -1,14 +1,14 @@
 import 'reflect-metadata'; // 👈 required for decorator metadata for sequelize
 import { Optional } from 'sequelize';
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasOne } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasOne, HasMany } from 'sequelize-typescript';
 import { Category } from './Category';
 import { Specification } from './Specification';
+import { StockBatch } from './StockBatch';
 
 interface ProductAttributes {
     id: number;
     name: string;
-    price: number;
-    quantity: number;
+    price: number; // Selling price
     image?: string | null;
     color?: string | null;
     storage?: string | null;
@@ -27,10 +27,7 @@ export class Product extends Model<ProductAttributes, ProductCreationAttributes>
     declare name: string;
 
     @Column({ type: DataType.DECIMAL(10, 2), allowNull: false })
-    declare price: number;
-
-    @Column({ type: DataType.INTEGER, allowNull: false })
-    declare quantity: number;
+    declare price: number; // Selling price
 
     @Column({ type: DataType.STRING, allowNull: true })
     declare image?: string | null;
@@ -53,4 +50,37 @@ export class Product extends Model<ProductAttributes, ProductCreationAttributes>
 
     @HasOne(() => Specification)
     declare specification: Specification;
+
+    @HasMany(() => StockBatch, 'productId')
+    declare stockBatches: StockBatch[];
+
+    // Virtual field for total quantity (calculated from batches)
+    get quantity(): number {
+        if (this.stockBatches) {
+            return this.stockBatches.reduce((total, batch) => total + batch.remainingQuantity, 0);
+        }
+        return 0;
+    }
+
+    // Virtual field for inventory value
+    get inventoryValue(): number {
+        if (this.stockBatches) {
+            return this.stockBatches.reduce((total, batch) => 
+                total + (batch.remainingQuantity * batch.purchasePrice), 0);
+        }
+        return 0;
+    }
+
+    // Virtual field for average cost price
+    get averageCostPrice(): number {
+        if (this.stockBatches && this.stockBatches.length > 0) {
+            const totalQuantity = this.stockBatches.reduce((total, batch) => total + batch.remainingQuantity, 0);
+            if (totalQuantity > 0) {
+                const totalCost = this.stockBatches.reduce((total, batch) => 
+                    total + (batch.remainingQuantity * batch.purchasePrice), 0);
+                return totalCost / totalQuantity;
+            }
+        }
+        return 0;
+    }
 }

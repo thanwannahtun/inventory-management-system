@@ -116,7 +116,8 @@ export const POST = withAuth(async (request, { user }) => {
     const product = await Product.create({
       name,
       price: parseFloat(price),
-      quantity: parseInt(quantity),
+      // quantity: parseInt(quantity),
+      
       color: color || null,
       storage: storage || null,
       ram: ram || null,

@@ -42,7 +42,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching product:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch product' },
+      { error: `Failed to fetch product ${error}` },
       { status: 500 }
     );
   }
@@ -72,7 +72,7 @@ export async function PUT(
     await product.update({
       name: body.name ?? product.name,
       price: body.price ?? product.price,
-      quantity: body.quantity ?? product.quantity,
+      // quantity: body.quantity ?? product.quantity,
       image: body.image ?? product.image,
       color: body.color ?? product.color,
       storage: body.storage ?? product.storage,

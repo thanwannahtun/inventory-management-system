@@ -2,6 +2,7 @@ import 'reflect-metadata'; // 👈 required for decorator metadata for sequelize
 import { Optional } from 'sequelize';
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { Product } from './Product';
+import { StockBatch } from './StockBatch';
 
 interface StockOutAttributes {
     id: number;
@@ -12,12 +13,16 @@ interface StockOutAttributes {
     date: string;
     operator: string;
     category: string;
-    unitPrice: number;
-    totalValue: number;
+    unitPrice: number; // Selling price
+    costPrice: number; // Purchase price from batch
+    totalValue: number; // Selling value
+    totalCost: number; // Cost value
+    profit: number; // Total profit
     notes?: string | null;
+    batchId?: number | null; // Track which batch this came from
 }
 
-interface StockOutCreationAttributes extends Optional<StockOutAttributes, 'id' | 'notes'> { }
+interface StockOutCreationAttributes extends Optional<StockOutAttributes, 'id' | 'notes' | 'batchId'> { }
 
 @Table({
     tableName: 'stockouts',
@@ -33,6 +38,13 @@ export class StockOut extends Model<StockOutAttributes, StockOutCreationAttribut
 
     @BelongsTo(() => Product, 'productId')
     declare productRelation: Product;
+
+    @ForeignKey(() => StockBatch)
+    @Column({ type: DataType.INTEGER, allowNull: true })
+    declare batchId?: number | null;
+
+    @BelongsTo(() => StockBatch, 'batchId')
+    declare batchRelation?: StockBatch;
 
     @Column({ type: DataType.STRING, allowNull: false })
     declare productName: string;
@@ -53,10 +65,19 @@ export class StockOut extends Model<StockOutAttributes, StockOutCreationAttribut
     declare category: string;
 
     @Column({ type: DataType.DECIMAL(10, 2), allowNull: false })
-    declare unitPrice: number;
+    declare unitPrice: number; // Selling price
 
     @Column({ type: DataType.DECIMAL(10, 2), allowNull: false })
-    declare totalValue: number;
+    declare costPrice: number; // Purchase price from batch
+
+    @Column({ type: DataType.DECIMAL(10, 2), allowNull: false })
+    declare totalValue: number; // Selling value (quantity * unitPrice)
+
+    @Column({ type: DataType.DECIMAL(10, 2), allowNull: false })
+    declare totalCost: number; // Cost value (quantity * costPrice)
+
+    @Column({ type: DataType.DECIMAL(10, 2), allowNull: false })
+    declare profit: number; // Total profit (totalValue - totalCost)
 
     @Column({ type: DataType.TEXT, allowNull: true })
     declare notes?: string | null;
