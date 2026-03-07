@@ -7,6 +7,7 @@ interface ActivityAttributes {
     type: 'stock_in' | 'stock_out' | 'new_product' | 'category_added' | 'login' | 'category_updated' | 'category_deleted';
     description: string;
     operator: string;
+    createdAt: Date;
 }
 
 interface ActivityLogCreationAttributes extends Optional<ActivityAttributes, 'id'> { }
@@ -30,4 +31,7 @@ export class ActivityLog extends Model<ActivityAttributes, ActivityLogCreationAt
 
     @Column({ type: DataType.STRING, allowNull: false })
     declare operator: string;
+
+    @Column(DataType.DATE)
+    declare createdAt: Date;
 }

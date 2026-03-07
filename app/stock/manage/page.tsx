@@ -39,9 +39,9 @@ export default function StockManagementPage() {
 
   const handleAddStock = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!addStockForm.productId || !addStockForm.quantity || !addStockForm.purchasePrice) {
-      alert('Please fill in all fields');
+
+    if (addStockForm.productId === 0 || !addStockForm.quantity || !addStockForm.purchasePrice) {
+      alert('Please select a product and fill in all fields');
       return;
     }
 
@@ -92,13 +92,7 @@ export default function StockManagementPage() {
             <h1 className="text-3xl font-bold text-white">Stock Management</h1>
             <p className="text-gray-400 mt-1">Manage inventory with FIFO tracking</p>
           </div>
-          <button
-            onClick={() => setShowAddStock(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-          >
-            <PlusIcon className="h-4 w-4" />
-            <span>Add Stock</span>
-          </button>
+
         </div>
 
         {/* Stats Cards */}
@@ -112,7 +106,7 @@ export default function StockManagementPage() {
               <PackageIcon className="h-8 w-8 text-blue-500" />
             </div>
           </div>
-          
+
           <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -122,7 +116,7 @@ export default function StockManagementPage() {
               <TrendingUpIcon className="h-8 w-8 text-green-500" />
             </div>
           </div>
-          
+
           <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -170,7 +164,7 @@ export default function StockManagementPage() {
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Avg Cost Price</p>
-                  <p className="text-lg font-semibold text-white">${(product.averageCostPrice || 0).toFixed(2)}</p>
+                  <p className="text-lg font-semibold text-white">${(product.averageCost || 0).toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Inventory Value</p>
@@ -179,7 +173,7 @@ export default function StockManagementPage() {
                 <div>
                   <p className="text-gray-400 text-sm">Potential Profit</p>
                   <p className="text-lg font-semibold text-green-400">
-                    ${((product.price - (product.averageCostPrice || 0)) * (product.quantity || 0)).toFixed(2)}
+                    ${((product.price - (product.averageCost || 0)) * (product.quantity || 0)).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -213,18 +207,29 @@ export default function StockManagementPage() {
               )}
 
               <div className="flex items-center space-x-4 mt-4">
-                <button
-                  onClick={() => setSelectedProduct(product)}
-                  className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
-                >
+                <Link href={`/stock-out/${product.id}`} className="text-blue-400 hover:text-blue-300">
                   View Details
-                </button>
+                </Link>
                 <Link
                   href={`/stock-out/new?productId=${product.id}`}
                   className="text-red-400 hover:text-red-300 text-sm transition-colors"
                 >
                   Stock Out
                 </Link>
+                <button
+                  onClick={() => {
+                    setAddStockForm({
+                      productId: product?.id ?? 0,
+                      quantity: 0,
+                      purchasePrice: 0
+                    });
+                    setShowAddStock(true);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  <span>Add Stock</span>
+                </button>
               </div>
             </div>
           ))}
@@ -239,12 +244,13 @@ export default function StockManagementPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Product</label>
                   <select
+                    disabled={addStockForm.productId !== 0}
                     value={addStockForm.productId}
                     onChange={(e) => setAddStockForm(prev => ({ ...prev, productId: parseInt(e.target.value) }))}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
                     required
                   >
-                    <option value="">Select Product</option>
+                    <option value="0">Select Product</option>
                     {products.map((product) => (
                       <option key={product.id} value={product.id}>
                         {product.name}
@@ -256,8 +262,14 @@ export default function StockManagementPage() {
                   <label className="block text-sm font-medium text-gray-300 mb-2">Quantity</label>
                   <input
                     type="number"
-                    value={addStockForm.quantity}
-                    onChange={(e) => setAddStockForm(prev => ({ ...prev, quantity: parseInt(e.target.value) }))}
+                    value={addStockForm.quantity || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setAddStockForm(prev => ({
+                        ...prev,
+                        quantity: value === '' ? 0 : parseInt(value)
+                      }));
+                    }}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
                     min="1"
                     required
@@ -267,8 +279,14 @@ export default function StockManagementPage() {
                   <label className="block text-sm font-medium text-gray-300 mb-2">Purchase Price</label>
                   <input
                     type="number"
-                    value={addStockForm.purchasePrice}
-                    onChange={(e) => setAddStockForm(prev => ({ ...prev, purchasePrice: parseFloat(e.target.value) }))}
+                    value={addStockForm.purchasePrice || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setAddStockForm(prev => ({
+                        ...prev,
+                        purchasePrice: value === '' ? 0 : parseFloat(value)
+                      }));
+                    }}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
                     step="0.01"
                     min="0"

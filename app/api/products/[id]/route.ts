@@ -4,6 +4,7 @@ import { Product } from '@/db/models/Product';
 import { Category } from '@/db/models/Category';
 import { Specification } from '@/db/models/Specification';
 import { connectDatabase, sequelize } from '@/db/config/database';
+import { FIFOService } from '@/services/fifoService';
 
 // GET single product
 export async function GET(
@@ -13,20 +14,26 @@ export async function GET(
   try {
     await connectDatabase();
     const { id } = await params;
-    const product = await sequelize.models.Product.findByPk(id, {
-      include: [
-        {
-          model: Category,
-          as: 'categoryRelation',
-          attributes: ['id', 'name']
-        },
-        {
-          model: Specification,
-        },
-      ]
-    });
+    // const product = await sequelize.models.Product.findByPk(id, {
+    //   include: [
+    //     {
+    //       model: Category,
+    //       as: 'categoryRelation',
+    //       attributes: ['id', 'name']
+    //     },
+    //     {
+    //       model: Specification,
+    //     },
+    //   ]
+    // });
 
-    if (!product) {
+    const stockStatus = await FIFOService.getStockStatus(parseInt(id));
+
+    if (!stockStatus) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    if (!stockStatus.product) {
       return NextResponse.json(
         { error: 'Product not found' },
         { status: 404 }
@@ -35,10 +42,11 @@ export async function GET(
 
 
 
-    return NextResponse.json({
-      ...product.toJSON(),
-      // specifications
-    });
+    // return NextResponse.json({
+    //   ...stockStatus,
+    //   // specifications
+    // });
+    return NextResponse.json(stockStatus);
   } catch (error) {
     console.error('Error fetching product:', error);
     return NextResponse.json(

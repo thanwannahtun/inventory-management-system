@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/Layout/MainLayout';
-import { useParams } from 'next/navigation';
-import { ArrowLeftIcon, EditIcon, TrashIcon, PackageIcon, UserIcon, CalendarIcon, DollarSignIcon } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeftIcon, TrashIcon, PackageIcon, UserIcon, CalendarIcon, DollarSignIcon, BarChart3Icon } from 'lucide-react';
 import Link from 'next/link';
+import { authFetch } from '@/lib/api-client';
 
+// Updated interface to match your FIFO API response
 interface StockOutRecord {
   id: number;
   productId: number;
@@ -16,54 +18,54 @@ interface StockOutRecord {
   operator: string;
   category: string;
   unitPrice: number;
+  costPrice: number; // Added from FIFO
   totalValue: number;
+  totalCost: number;  // Added from FIFO
+  profit: number;     // Added from FIFO
   notes?: string;
 }
 
 export default function StockOutDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const [record, setRecord] = useState<StockOutRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockRecord: StockOutRecord = {
-      id: parseInt(params.id as string),
-      productId: 1,
-      productName: 'iPhone 15 Pro Max',
-      quantity: 5,
-      reason: 'Sale',
-      date: '2024-01-15',
-      operator: 'John Doe',
-      category: 'SmartPhone Category',
-      unitPrice: 1199.99,
-      totalValue: 5999.95,
-      notes: 'Customer purchase - Order #12345'
-    };
-    
-    setRecord(mockRecord);
-    setIsLoading(false);
+    async function fetchRecord() {
+      try {
+        const response = await authFetch(`/api/stock-out/${params.id}`);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const data = await response.json();
+        setRecord(data);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    if (params.id) fetchRecord();
   }, [params.id]);
 
-  if (isLoading) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      </MainLayout>
-    );
-  }
+  // const handleDelete = async () => {
+  //   if (!confirm("Are you sure? This will return the stock to its original batch.")) return;
 
-  if (!record) {
-    return (
-      <MainLayout>
-        <div className="text-center py-12">
-          <p className="text-gray-400">Stock out record not found</p>
-        </div>
-      </MainLayout>
-    );
-  }
+  //   setIsDeleting(true);
+  //   try {
+  //     const response = await authFetch(`/api/stock-out/${params.id}`, { method: 'DELETE' });
+  //     if (response.ok) {
+  //       router.push('/stock-out');
+  //       router.refresh();
+  //     } else {
+  //       alert("Failed to reverse stock-out.");
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //   } finally {
+  //     setIsDeleting(false);
+  //   }
+  // };
 
   const getReasonColor = (reason: string) => {
     switch (reason) {
@@ -76,43 +78,54 @@ export default function StockOutDetailPage() {
     }
   };
 
+  if (isLoading) return (
+    <MainLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    </MainLayout>
+  );
+
+  if (!record) return (
+    <MainLayout>
+      <div className="text-center py-12">
+        <p className="text-gray-400">Stock out record not found</p>
+        <Link href="/stock-out" className="text-blue-500 hover:underline mt-4 inline-block">Go Back</Link>
+      </div>
+    </MainLayout>
+  );
+
   return (
     <MainLayout>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link href="/stock-out" className="p-2 text-gray-400 hover:text-white transition-colors">
-              <ArrowLeftIcon className="h-5 w-5" />
-            </Link>
+            {/* <Link href="/stock-out" className="p-2 text-gray-400 hover:text-white"> */}
+            <ArrowLeftIcon className="h-5 w-5" onClick={() => router.back()} />
+            {/* </Link> */}
             <div>
               <h1 className="text-3xl font-bold text-white">Stock Out Details</h1>
               <p className="text-gray-400 mt-1">Transaction #{record.id}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <button className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
-              <EditIcon className="h-4 w-4" />
-              <span>Edit</span>
-            </button>
-            <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
-              <TrashIcon className="h-4 w-4" />
-              <span>Delete</span>
-            </button>
-          </div>
+          {/* <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="bg-red-600 hover:bg-red-700 disabled:bg-red-900 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <TrashIcon className="h-4 w-4" />
+            <span>{isDeleting ? 'Reversing...' : 'Void & Return Stock'}</span>
+          </button> */}
         </div>
 
-        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Transaction Details */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Product Information */}
             <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
               <h2 className="text-xl font-bold text-white mb-6 flex items-center">
                 <PackageIcon className="h-5 w-5 mr-2 text-blue-500" />
                 Product Information
               </h2>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Product Name</p>
@@ -120,126 +133,79 @@ export default function StockOutDetailPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Category</p>
-                  <p className="text-lg font-medium text-white">{record.category}</p>
+                  <p className="text-lg font-medium text-white">{record.category || 'General'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">Unit Price</p>
-                  <p className="text-lg font-medium text-white">${record.unitPrice.toFixed(2)}</p>
+                  <p className="text-sm text-gray-400 mb-1">Selling Price</p>
+                  <p className="text-lg font-medium text-white">${record.unitPrice.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">Quantity</p>
+                  <p className="text-sm text-gray-400 mb-1">Quantity Sold</p>
                   <p className="text-lg font-medium text-red-400">-{record.quantity} units</p>
                 </div>
               </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-800">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-medium text-white">Total Value</span>
-                  <span className="text-2xl font-bold text-red-500">-${record.totalValue.toFixed(2)}</span>
-                </div>
-              </div>
             </div>
 
-            {/* Transaction Details */}
-            <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-                <CalendarIcon className="h-5 w-5 mr-2 text-blue-500" />
-                Transaction Details
+            {/* Financial Performance (The FIFO Benefit) */}
+            <div className="bg-gray-900 rounded-lg border border-gray-800 p-4 sm:p-6 bg-linear-to-br from-gray-900 to-slate-900">
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 flex items-center">
+                <BarChart3Icon className="h-5 w-5 mr-2 text-green-500" />
+                Financial Impact
               </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">Transaction ID</p>
-                  <p className="text-lg font-medium text-white">#{record.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">Date</p>
-                  <p className="text-lg font-medium text-white">{record.date}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">Reason</p>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getReasonColor(record.reason)}`}>
-                    {record.reason}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">Operator</p>
-                  <p className="text-lg font-medium text-white">{record.operator}</p>
-                </div>
-              </div>
 
-              {record.notes && (
-                <div className="mt-6 pt-6 border-t border-gray-800">
-                  <p className="text-sm text-gray-400 mb-2">Notes</p>
-                  <p className="text-white">{record.notes}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center">
+
+                <div className="p-3 sm:p-4 bg-black/30 rounded-lg">
+                  <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider">
+                    Revenue
+                  </p>
+                  <p className="text-base sm:text-xl font-bold text-white wrap-break-word">
+                    ${record.totalValue.toLocaleString()}
+                  </p>
                 </div>
-              )}
+
+                <div className="p-3 sm:p-4 bg-black/30 rounded-lg">
+                  <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-wider">
+                    Cost of Sales
+                  </p>
+                  <p className="text-base sm:text-xl font-bold text-orange-400 wrap-break-word">
+                    ${record.totalCost.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="p-3 sm:p-4 bg-green-900/20 border border-green-500/20 rounded-lg">
+                  <p className="text-[10px] sm:text-xs text-green-400 uppercase tracking-wider font-bold">
+                    Gross Profit
+                  </p>
+                  <p className="text-base sm:text-xl font-bold text-green-400 wrap-break-word">
+                    ${record.profit.toLocaleString()}
+                  </p>
+                </div>
+
+              </div>
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-              <h3 className="text-lg font-bold text-white mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
-                  Print Receipt
-                </button>
-                <button className="w-full bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
-                  Export PDF
-                </button>
-                <button className="w-full bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
-                  Email Receipt
-                </button>
-              </div>
-            </div>
-
-            {/* Related Information */}
             <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-                <UserIcon className="h-5 w-5 mr-2 text-blue-500" />
-                Operator Information
+                <CalendarIcon className="h-5 w-5 mr-2 text-blue-500" />
+                Timeline
               </h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 bg-gray-700 rounded-full flex items-center justify-center">
-                    <UserIcon className="h-5 w-5 text-gray-300" />
-                  </div>
-                  <div>
-                    <p className="text-white font-medium">{record.operator}</p>
-                    <p className="text-gray-400 text-sm">Stock Manager</p>
-                  </div>
-                </div>
-                <div className="pt-3 border-t border-gray-800">
-                  <p className="text-sm text-gray-400 mb-1">Employee ID</p>
-                  <p className="text-white">EMP001</p>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs text-gray-400">Recorded Date</p>
+                  <p className="text-white">{new Date(record.date).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">Department</p>
-                  <p className="text-white">Inventory Management</p>
+                  <p className="text-xs text-gray-400">Processed By</p>
+                  <p className="text-white">{record.operator}</p>
                 </div>
-              </div>
-            </div>
-
-            {/* Impact Summary */}
-            <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-                <DollarSignIcon className="h-5 w-5 mr-2 text-blue-500" />
-                Impact Summary
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Stock Impact</span>
-                  <span className="text-red-400 font-medium">-{record.quantity} units</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Value Impact</span>
-                  <span className="text-red-400 font-medium">-${record.totalValue.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Transaction Type</span>
-                  <span className="text-white font-medium">{record.reason}</span>
+                <div>
+                  <p className="text-xs text-gray-400">Reason</p>
+                  <span className={`mt-1 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getReasonColor(record.reason)}`}>
+                    {record.reason}
+                  </span>
                 </div>
               </div>
             </div>

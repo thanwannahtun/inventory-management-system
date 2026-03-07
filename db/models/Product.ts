@@ -1,5 +1,5 @@
 import 'reflect-metadata'; // 👈 required for decorator metadata for sequelize
-import { Optional } from 'sequelize';
+import { NonAttribute, Optional } from 'sequelize';
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasOne, HasMany } from 'sequelize-typescript';
 import { Category } from './Category';
 import { Specification } from './Specification';
@@ -52,7 +52,7 @@ export class Product extends Model<ProductAttributes, ProductCreationAttributes>
     declare specification: Specification;
 
     @HasMany(() => StockBatch, 'productId')
-    declare stockBatches: StockBatch[];
+    declare stockBatches: NonAttribute<StockBatch>[];
 
     // Virtual field for total quantity (calculated from batches)
     get quantity(): number {

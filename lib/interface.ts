@@ -18,7 +18,7 @@ export interface ProductData {
   
   // Virtual fields from FIFO service
   inventoryValue?: number;
-  averageCostPrice?: number;
+  averageCost?: number;
 }
 
 export interface StockBatch {

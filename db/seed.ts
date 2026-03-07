@@ -1,4 +1,4 @@
-import 'dotenv/config'; // 👈 MUST be the first line
+import 'dotenv/config';
 import { sequelize } from './config/database';
 import { Category } from './models/Category';
 import { Product } from './models/Product';
@@ -10,12 +10,12 @@ import bcrypt from 'bcryptjs';
 
 export async function seedDatabase() {
   try {
-    // Sync all models
+    // 1. Clear and Sync Database
     await sequelize.sync({ force: true });
     console.log('✅ Database synced successfully');
 
-    // Seed Roles
-    const roles = await Role.bulkCreate([
+    // 2. Seed Roles
+    const [adminRole, managerRole, userRole] = await Role.bulkCreate([
       {
         name: 'Administrator',
         description: 'System administrator with full access',
@@ -35,255 +35,130 @@ export async function seedDatabase() {
         isActive: true
       }
     ]);
-
     console.log('✅ Roles seeded');
 
-    // Seed Users
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-    const userHashedPassword = await bcrypt.hash('user123', 10);
+    // 3. Seed Users
+    const adminPassword = await bcrypt.hash('admin123', 10);
+    const staffPassword = await bcrypt.hash('user123', 10);
 
     await User.bulkCreate([
       {
         username: 'admin',
         email: 'admin@example.com',
-        password: hashedPassword,
+        password: adminPassword,
         firstName: 'Admin',
         lastName: 'User',
-        roleId: 1, // Administrator
+        roleId: adminRole.id, // Using dynamic ID
         isActive: true
       },
       {
         username: 'manager',
         email: 'manager@example.com',
-        password: userHashedPassword,
+        password: staffPassword,
         firstName: 'Store',
         lastName: 'Manager',
-        roleId: 2, // Manager
-        isActive: true
-      },
-      {
-        username: 'user',
-        email: 'user@example.com',
-        password: userHashedPassword,
-        firstName: 'Regular',
-        lastName: 'User',
-        roleId: 3, // User
+        roleId: managerRole.id,
         isActive: true
       }
     ]);
-
     console.log('✅ Users seeded');
 
-    // Seed Categories
-    const categories = await Category.bulkCreate([
-      {
-        name: 'SmartPhone Category',
-        parent_id: null,
-        is_active: true
-      },
-      {
-        name: 'Laptop Category',
-        parent_id: null,
-        is_active: true
-      },
-      {
-        name: 'Tablet Category',
-        parent_id: null,
-        is_active: true
-      },
-      {
-        name: 'iPhone',
-        parent_id: 1,
-        is_active: true
-      },
-      {
-        name: 'Samsung',
-        parent_id: 1,
-        is_active: true
-      },
-      {
-        name: 'Gaming Laptops',
-        parent_id: 2,
-        is_active: true
-      },
-      {
-        name: 'Business Laptops',
-        parent_id: 2,
-        is_active: true
-      }
-    ]);
+    // 4. Seed Categories (Handling Parent/Child Relationships)
+    const phoneCat = await Category.create({ name: 'SmartPhone Category', is_active: true });
+    const laptopCat = await Category.create({ name: 'Laptop Category', is_active: true });
+    const tabletCat = await Category.create({ name: 'Tablet Category', is_active: true });
 
+    // Sub-categories
+    await Category.bulkCreate([
+      { name: 'iPhone', parent_id: phoneCat.id, is_active: true },
+      { name: 'Samsung', parent_id: phoneCat.id, is_active: true },
+      { name: 'Gaming Laptops', parent_id: laptopCat.id, is_active: true }
+    ]);
     console.log('✅ Categories seeded');
 
-    // Seed Products (without quantity field)
+    // 5. Seed Products
+    // NOTE: Ensure your Product model uses 'categoryId' as the foreign key field
     const products = await Product.bulkCreate([
       {
         name: 'iPhone 15 Pro Max',
-        price: 1199.99, // Selling price
+        price: 1199.99,
         color: 'Natural Titanium',
         storage: '256GB',
         ram: '8GB',
-        category: 1
+        category: phoneCat.id
       },
       {
         name: 'Samsung Galaxy S24 Ultra',
-        price: 1299.99, // Selling price
+        price: 1299.99,
         color: 'Phantom Black',
         storage: '512GB',
         ram: '12GB',
-        category: 1
+        category: phoneCat.id
       },
       {
         name: 'MacBook Pro 16"',
-        price: 2499.99, // Selling price
+        price: 2499.99,
         color: 'Space Gray',
         storage: '1TB SSD',
         ram: '32GB',
-        category: 2
-      },
-      {
-        name: 'Dell XPS 15',
-        price: 1899.99, // Selling price
-        color: 'Silver',
-        storage: '512GB SSD',
-        ram: '16GB',
-        category: 2
-      },
-      {
-        name: 'iPad Pro 12.9"',
-        price: 1099.99, // Selling price
-        color: 'Space Gray',
-        storage: '256GB',
-        ram: '8GB',
-        category: 3
-      },
-      {
-        name: 'Samsung Galaxy Tab S9',
-        price: 899.99, // Selling price
-        color: 'Graphite',
-        storage: '128GB',
-        ram: '8GB',
-        category: 3
+        category: laptopCat.id
       }
     ]);
-
     console.log('✅ Products seeded');
 
-    // Seed Stock Batches for FIFO demonstration
-    const stockBatches = await StockBatch.bulkCreate([
-      // iPhone 15 Pro Max - Multiple batches with different purchase prices
+    // 6. Seed Stock Batches (FIFO Setup)
+    const batches = await StockBatch.bulkCreate([
       {
-        productId: 1,
+        productId: products[0].id, // iPhone Batch 1
         initialQuantity: 30,
-        remainingQuantity: 10, // 20 already sold
-        purchasePrice: 999.99, // Original purchase price
+        remainingQuantity: 10,
+        purchasePrice: 999.99,
         receivedDate: new Date('2025-01-15')
       },
       {
-        productId: 1,
-        initialQuantity: 25,
-        remainingQuantity: 25, // All available
-        purchasePrice: 1099.99, // Higher purchase price
-        receivedDate: new Date('2025-11-20')
-      },
-      
-      // Samsung Galaxy S24 Ultra
-      {
-        productId: 2,
-        initialQuantity: 35,
-        remainingQuantity: 35,
-        purchasePrice: 1199.99,
-        receivedDate: new Date('2025-01-10')
-      },
-      
-      // MacBook Pro 16"
-      {
-        productId: 3,
-        initialQuantity: 20,
-        remainingQuantity: 15, // 5 already sold
-        purchasePrice: 2299.99,
-        receivedDate: new Date('2025-02-01')
-      },
-      
-      // Dell XPS 15
-      {
-        productId: 4,
+        productId: products[0].id, // iPhone Batch 2 (Newer)
         initialQuantity: 25,
         remainingQuantity: 25,
-        purchasePrice: 1699.99,
-        receivedDate: new Date('2025-02-15')
+        purchasePrice: 1099.99,
+        receivedDate: new Date('2026-02-20')
       },
-      
-      // iPad Pro 12.9"
       {
-        productId: 5,
-        initialQuantity: 40,
-        remainingQuantity: 40,
-        purchasePrice: 999.99,
-        receivedDate: new Date('2025-01-20')
-      },
-      
-      // Samsung Galaxy Tab S9
-      {
-        productId: 6,
-        initialQuantity: 30,
-        remainingQuantity: 30,
-        purchasePrice: 799.99,
-        receivedDate: new Date('2025-01-25')
+        productId: products[2].id, // MacBook Batch
+        initialQuantity: 20,
+        remainingQuantity: 15,
+        purchasePrice: 2299.99,
+        receivedDate: new Date('2025-02-01')
       }
     ]);
+    console.log('✅ Stock batches seeded');
 
-    console.log('✅ Stock batches seeded (FIFO demonstration)');
-
-    // Seed Stock Out Records with FIFO tracking
+    // 7. Seed Stock Out Records
     await StockOut.bulkCreate([
       {
-        productId: 1,
-        productName: 'iPhone 15 Pro Max',
+        productId: products[0].id,
+        productName: products[0].name,
         quantity: 20,
         reason: 'Sale',
-        date: '2025-03-01',
+        date: new Date().toISOString().split('T')[0],
         operator: 'admin',
         category: 'SmartPhone Category',
-        unitPrice: 1199.99, // Selling price
-        costPrice: 999.99, // Cost price from first batch
+        unitPrice: 1199.99,
+        costPrice: 999.99,
         totalValue: 20 * 1199.99,
         totalCost: 20 * 999.99,
         profit: 20 * (1199.99 - 999.99),
-        notes: 'Sold 20 units from first batch (FIFO)',
-        batchId: 1
-      },
-      {
-        productId: 3,
-        productName: 'MacBook Pro 16"',
-        quantity: 5,
-        reason: 'Sale',
-        date: '2025-03-05',
-        operator: 'manager',
-        category: 'Laptop Category',
-        unitPrice: 2499.99,
-        costPrice: 2299.99,
-        totalValue: 5 * 2499.99,
-        totalCost: 5 * 2299.99,
-        profit: 5 * (2499.99 - 2299.99),
-        notes: 'Sold 5 units from batch',
-        batchId: 3
+        notes: 'Initial sale from Batch 1',
+        batchId: batches[0].id
       }
     ]);
 
-    console.log('✅ Stock out records seeded with FIFO tracking');
-
     console.log('🎉 Database seeding completed successfully!');
-    console.log('📊 FIFO System Demo:');
-    console.log('   - iPhone 15 Pro Max: 10 units @ $999.99 + 25 units @ $1099.99');
-    console.log('   - Next sale will use FIFO: 10 units from cheaper batch first');
-    console.log('   - Profit tracking is now accurate with cost basis');
   } catch (error) {
     console.error('❌ Error seeding database:', error);
+    process.exit(1);
   }
 }
 
-// Run seeding if this file is executed directly
 if (require.main === module) {
   seedDatabase();
 }

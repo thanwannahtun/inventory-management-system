@@ -511,6 +511,18 @@ export default function AddStockPage() {
             )}
           </div>
 
+          {formData.price > 0 && (formData.purchasePrice ?? 0) > 0 && (
+            <div className="p-4 bg-blue-900/30 border border-blue-500 rounded-lg">
+              <p className="text-blue-400 text-sm">Estimated Profit per Unit:</p>
+              <p className="text-2xl font-bold text-white">
+                ${(formData.price - (formData.purchasePrice ?? 0)).toLocaleString()}
+                <span className="text-sm ml-2 text-green-400">
+                  ({(((formData.price - (formData.purchasePrice ?? 0)) / formData.price) * 100).toFixed(1)}%)
+                </span>
+              </p>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex items-center justify-end space-x-4">
             <Link

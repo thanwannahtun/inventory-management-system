@@ -5,6 +5,7 @@ import { ActivityLog } from '@/db/models/ActivityLog';
 import { Category } from '@/db/models/Category';
 import { Op } from 'sequelize';
 import { connectDatabase } from '@/db/config/database';
+import { Specification } from '@/db/models/Specification';
 
 export interface FIFOStockAllocation {
   batchId: number;
@@ -30,9 +31,9 @@ export class FIFOService {
     productId: number,
     quantity: number,
     purchasePrice: number,
-    operator: string
+    operator: string,
+    transaction?: any
   ): Promise<StockBatch> {
-    await connectDatabase();
     // Create new stock batch
     const batch = await StockBatch.create({
       productId,
@@ -40,14 +41,15 @@ export class FIFOService {
       remainingQuantity: quantity,
       purchasePrice,
       receivedDate: new Date()
-    });
+    }, transaction ? { transaction } : {});
 
     // Log the activity
     await ActivityLog.create({
       type: 'stock_in',
       description: `Added ${quantity} units of product ${productId} at ${purchasePrice} per unit`,
-      operator
-    });
+      operator,
+      createdAt: new Date()
+    }, transaction ? { transaction } : {});
 
     return batch;
   }
@@ -61,11 +63,10 @@ export class FIFOService {
     unitPrice: number, // Selling price
     reason: string,
     operator: string,
-    notes?: string
+    notes?: string,
+    transaction?: any
   ): Promise<FIFOStockOutResult> {
     try {
-    await connectDatabase();
-
       // Get product with stock batches ordered by received date (FIFO)
       const product = await Product.findByPk(productId, {
         include: [
@@ -77,7 +78,8 @@ export class FIFOService {
             },
             order: [['receivedDate', 'ASC'], ['createdAt', 'ASC']]
           }
-        ]
+        ],
+        transaction: transaction || undefined
       });
 
       if (!product) {
@@ -100,7 +102,7 @@ export class FIFOService {
         if (remainingQuantity <= 0) break;
 
         const allocatedQuantity = Math.min(remainingQuantity, batch.remainingQuantity);
-        
+
         allocations.push({
           batchId: batch.id,
           quantity: allocatedQuantity,
@@ -114,7 +116,7 @@ export class FIFOService {
         // Update batch remaining quantity
         await batch.update({
           remainingQuantity: batch.remainingQuantity - allocatedQuantity
-        });
+        }, transaction ? { transaction } : {});
       }
 
       const totalValue = quantity * unitPrice;
@@ -137,15 +139,16 @@ export class FIFOService {
           profit: allocation.quantity * (unitPrice - allocation.costPrice),
           notes: notes || null,
           batchId: allocation.batchId
-        });
+        }, transaction ? { transaction } : {});
       }
 
       // Log the activity
       await ActivityLog.create({
         type: 'stock_out',
         description: `${quantity} units of ${product.name} - ${reason}`,
-        operator
-      });
+        operator,
+        createdAt: new Date()
+      }, transaction ? { transaction } : {});
 
       return {
         success: true,
@@ -164,16 +167,25 @@ export class FIFOService {
   /**
    * Get current stock status with batch information
    */
-  static async getStockStatus(productId: number) {
-    await connectDatabase();
+  static async getStockStatus(productId: number, transaction?: any) {
     const product = await Product.findByPk(productId, {
       include: [
         {
           model: StockBatch,
           as: 'stockBatches',
           order: [['receivedDate', 'ASC'], ['createdAt', 'ASC']]
-        }
-      ]
+        },
+        {
+          model: Category,
+          as: 'categoryRelation',
+          attributes: ['id', 'name']
+        },
+        {
+          model: Specification,
+        },
+
+      ],
+      transaction: transaction || undefined
     });
 
     if (!product) {
@@ -186,14 +198,14 @@ export class FIFOService {
     const averageCost = totalQuantity > 0 ? totalValue / totalQuantity : 0;
 
     return {
-      product: {
-        id: product.id,
-        name: product.name,
-        price: product.price, // Selling price
-        quantity: totalQuantity,
-        inventoryValue: totalValue,
-        averageCost
-      },
+      // product: {
+      // ...product,
+      // price: product.price, // Selling price
+      // quantity: totalQuantity,
+      // inventoryValue: totalValue,
+      // averageCost
+      // },
+      product: { ...product.get({ plain: true }), price: product.price, quantity: totalQuantity, inventoryValue: totalValue, averageCost },
       batches: batches.map(batch => ({
         id: batch.id,
         initialQuantity: batch.initialQuantity,
@@ -201,15 +213,16 @@ export class FIFOService {
         purchasePrice: batch.purchasePrice,
         receivedDate: batch.receivedDate,
         value: batch.remainingQuantity * batch.purchasePrice
-      }))
+      })),
+      category: product.categoryRelation,
+      specification: product.specification,
     };
   }
 
   /**
    * Get all products with their stock status
    */
-  static async getAllStockStatus() {
-    await connectDatabase();
+  static async getAllStockStatus(transaction?: any) {
 
     const products = await Product.findAll({
       include: [
@@ -223,7 +236,8 @@ export class FIFOService {
           as: 'categoryRelation',
           attributes: ['id', 'name']
         }
-      ]
+      ],
+      transaction: transaction || undefined
     });
 
     return products.map(product => {

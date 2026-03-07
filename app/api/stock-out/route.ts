@@ -7,6 +7,7 @@ import { connectDatabase } from '@/db/config/database';
 import { ActivityLog } from '@/db/models/ActivityLog';
 import { withAuth } from '@/lib/middleware';
 import { JWTPayload } from '@/lib/auth';
+import { FIFOService } from '@/services/fifoService';
 
 // GET all stock out records with filtering
 export const GET = withAuth(async (request: NextRequest) => {
@@ -57,94 +58,60 @@ export const GET = withAuth(async (request: NextRequest) => {
 
 
 // POST new stock out record
-// export const POST = withAuth(async (request: NextRequest, context: {
-//   user: JWTPayload;
-// }) => {
-// export const POST = withAuth(async (request: NextRequest, { user }) => {
 export const POST = withAuth(async (request: NextRequest, { user }) => {
-
   const { username } = user;
-
-  // export async function POST(request: NextRequest) {
-  // Declare t outside so it's accessible in the catch block
   let t;
+
   try {
     await connectDatabase();
     t = await sequelize.transaction();
+
     const { productId, quantity, reason, notes } = await request.json();
 
+    // 1. Validation
     if (!productId || !quantity || !reason) {
-      await t.rollback();
+      if (t) await t.rollback();
       return NextResponse.json(
         { error: 'Product ID, quantity, and reason are required' },
         { status: 400 }
       );
     }
 
-    // 2. Fetch product within the transaction context
-    const product: any = await Product.findByPk(productId, {
-      include: [
-        {
-          model: Category,
-          as: 'categoryRelation',
-          attributes: ['id', 'name']
-        }
-      ],
-      transaction: t // Pass transaction here
-    });
-
+    // 2. Fetch product (needed to get the current Selling Price)
+    const product = await Product.findByPk(productId, { transaction: t });
     if (!product) {
-      await t.rollback();
+      if (t) await t.rollback();
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    const outQty = parseInt(quantity);
-    if (product.quantity < outQty) {
-      await t.rollback();
-      return NextResponse.json({ error: 'Insufficient stock quantity' }, { status: 400 });
+    // 3. Use your FIFOService to handle the heavy lifting
+    // This handles: Batch selection, Batch updates, StockOut record creation, and Activity Log
+    const fifoResult = await FIFOService.removeStock(
+      parseInt(productId),
+      parseInt(quantity),
+      product.price, // Current selling price
+      reason,
+      username,
+      notes,
+      t // 👈 VERY IMPORTANT: Pass the transaction
+    );
+
+    if (!fifoResult.success) {
+      if (t) await t.rollback();
+      return NextResponse.json({ error: fifoResult.error }, { status: 400 });
     }
 
-    // 3. Update product quantity (decrement)
-    await product.update(
-      { quantity: product.quantity - outQty },
-      { transaction: t } // Pass transaction here
-    );
-
-    // 4. Create stock out record
-    const stockOutRecord = await sequelize.models.StockOut.create(
-      {
-        productId: parseInt(productId),
-        productName: product.name,
-        quantity: outQty,
-        reason,
-        date: new Date().toISOString().split('T')[0],
-        operator: username,
-        category: product.categoryRelation?.name ?? "",
-        unitPrice: product.price,
-        totalValue: product.price * outQty,
-        notes: notes || null
-      },
-      { transaction: t } // Pass transaction here
-    );
-
-    await ActivityLog.create({
-      type: 'stock_out',
-      description: `${quantity} of ${product.name}: ${reason}`,
-      operator: username,
-    }, { transaction: t });
-
-    // 5. If everything succeeded, commit the changes to the database
+    // 4. Finalize
     await t.commit();
 
-    return NextResponse.json(stockOutRecord, { status: 201 });
+    // Return the result (includes totalCost, totalValue, and totalProfit)
+    return NextResponse.json(fifoResult, { status: 201 });
 
   } catch (error) {
-    // 6. If ANY step fails, undo all changes made during this request
-    if (t) await t.rollback();
-
-    console.error('Error creating stock out record:', error);
+    if (t && !t.afterCommit) await t.rollback();
+    console.error('Error in stock-out:', error);
     return NextResponse.json(
-      { error: 'Failed to create stock out record' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

@@ -6,7 +6,8 @@ import { ArrowLeftIcon, SaveIcon, SearchIcon } from 'lucide-react';
 import Link from 'next/link';
 import { ProductData } from '@/lib/interface';
 import { authFetch } from '@/lib/api-client';
-
+import { useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 interface StockOutFormData {
   productId: string;
@@ -22,6 +23,9 @@ export default function NewStockOutPage() {
     reason: 'Sale',
     notes: ''
   });
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [products, setProducts] = useState<ProductData[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
@@ -46,6 +50,20 @@ export default function NewStockOutPage() {
 
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    const queryProductId = searchParams.get('productId');
+
+    if (!queryProductId || products.length === 0) return;
+
+    const foundProduct = products.find(
+      (p) => p.id === parseInt(queryProductId)
+    );
+
+    if (foundProduct) {
+      handleProductSelect(foundProduct);
+    }
+  }, [products, searchParams]);
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -124,9 +142,9 @@ export default function NewStockOutPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center space-x-4">
-          <Link href="/stock-out" className="p-2 text-gray-400 hover:text-white transition-colors">
-            <ArrowLeftIcon className="h-5 w-5" />
-          </Link>
+          {/* <Link href="/stock-out" className="p-2 text-gray-400 hover:text-white transition-colors"> */}
+            <ArrowLeftIcon className="h-5 w-5"  onClick={() => router.back()}/>
+          {/* </Link> */}
           <div>
             <h1 className="text-3xl font-bold text-white">New Stock Out Operation</h1>
             <p className="text-gray-400 mt-1">Record a stock out transaction</p>

@@ -146,7 +146,7 @@ export const POST = withAuth(async (request, { user }) => {
       name,
       price: parseFloat(price),
       // quantity: parseInt(quantity),
-      
+
       color: color || null,
       storage: storage || null,
       ram: ram || null,
@@ -168,7 +168,8 @@ export const POST = withAuth(async (request, { user }) => {
         product.id,
         parseInt(quantity),
         actualPurchasePrice,
-        username
+        username,
+        t
       );
     }
 
@@ -176,20 +177,22 @@ export const POST = withAuth(async (request, { user }) => {
       type: 'stock_in',
       description: `${quantity} units of ${product.name} added`,
       operator: username,
+      createdAt: new Date()
     }, { transaction: t });
 
-    // 4. Everything worked? Commit the changes!
+
     await t.commit();
 
     // Return product with stock information
     const productWithStock = await FIFOService.getStockStatus(product.id);
-
+    // 4. Everything worked? Commit the changes!
     return NextResponse.json(productWithStock, { status: 201 });
 
   } catch (error) {
     // 5. If any step failed, undo everything
-    if (t) await t.rollback();
-
+    if (t && !t.afterCommit) {
+      await t.rollback();
+    }
     console.error('Error creating product:', error);
     return NextResponse.json(
       { error: 'Failed to create product' },
