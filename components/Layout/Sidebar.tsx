@@ -10,7 +10,7 @@ import {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Activities', href: '/activities', icon: ActivityIcon },
-  { name: 'Search Stocks', href: '/stocks/search', icon: SearchIcon },
+  { name: 'Search Stocks', href: '/stocks', icon: SearchIcon },
   { name: 'Categories', href: '/categories', icon: FolderIcon },
   { name: 'Add Stock', href: '/stocks/add', icon: PackageIcon },
   { name: 'Stock Management', href: '/stock/manage', icon: TrendingDownIcon },
@@ -44,7 +44,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <nav className="mt-4 px-4 overflow-y-auto h-[calc(100vh-100px)]">
         {navigation.map((item) => {
-          const isActive = pathname === item.href;
+          // const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(`${item.href}/`));
           return (
             <Link
               key={item.name}

@@ -86,7 +86,7 @@ export default function ProductDetailPage() {
       <MainLayout>
         <div className="text-center py-12">
           <p className="text-gray-400">Product not found</p>
-          <Link href="/stocks/search" className="text-blue-500 hover:underline mt-4 inline-block">Back to Inventory</Link>
+          <Link href="/stocks" className="text-blue-500 hover:underline mt-4 inline-block">Back to Inventory</Link>
         </div>
       </MainLayout>
     );
@@ -100,7 +100,7 @@ export default function ProductDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link href="/stocks/search" className="p-2 text-gray-400 hover:text-white transition-colors">
+            <Link href="/stocks" className="p-2 text-gray-400 hover:text-white transition-colors">
               <ArrowLeftIcon className="h-5 w-5" />
             </Link>
             <div>

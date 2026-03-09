@@ -139,7 +139,7 @@ export default function AddStockPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link href="/stocks/search" className="p-2 text-gray-400 hover:text-white transition-colors">
+            <Link href="/stocks" className="p-2 text-gray-400 hover:text-white transition-colors">
               <ArrowLeftIcon className="h-5 w-5" />
             </Link>
             <div>
@@ -526,7 +526,7 @@ export default function AddStockPage() {
           {/* Action Buttons */}
           <div className="flex items-center justify-end space-x-4">
             <Link
-              href="/stocks/search"
+              href="/stocks"
               className="px-6 py-2 text-gray-300 hover:text-white transition-colors"
             >
               Cancel

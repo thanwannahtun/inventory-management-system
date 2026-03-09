@@ -233,7 +233,7 @@ export default function DashboardPage() {
               <span className="text-purple-300 font-medium">Add Category</span>
             </a>
             <a
-              href="/stocks/search"
+              href="/stocks"
               className="flex items-center justify-center p-4 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
             >
               <PackageIcon className="h-5 w-5 text-gray-300 mr-2" />

@@ -69,7 +69,7 @@ export default function EditStockPage({ params }: { params: Promise<{ id: string
 
                     if (data.specification) setShowSpecifications(true);
                 } else {
-                    router.push('/stocks/search');
+                    router.push('/stocks');
                 }
             } catch (error) {
                 console.error('Error loading data:', error);
