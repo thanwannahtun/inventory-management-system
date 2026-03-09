@@ -10,7 +10,9 @@ export const GET = withAuth(async (request, { user, params }) => {
   try {
     // const { id } = await params;
     const { id } = await params;
-    const category = await sequelize.models.Category.findByPk(id, {
+    await connectDatabase();
+
+    const category = await Category.findByPk(id, {
       include: [
         {
           model: Category,
@@ -18,7 +20,8 @@ export const GET = withAuth(async (request, { user, params }) => {
         },
         {
           model: Category,
-          as: 'parent'
+          as: 'parent',
+          include: [{ model: Category, as: 'parent' }] // Continue nesting or use a recursive helper
         }
       ]
     });
@@ -69,7 +72,8 @@ export const PUT = withAuth(async (request, { user, params }) => {
     await ActivityLog.create({
       type: 'category_updated',
       description: `Category Updated: ${category.name} `,
-      operator: username
+      operator: username,
+      createdAt: new Date()
     }, { transaction: t });
 
     await t.commit();
@@ -123,7 +127,8 @@ export const DELETE = withAuth(async (request, { user, params }) => {
     await ActivityLog.create({
       type: "category_deleted",
       description: `Category Deleted: ${category.name} `,
-      operator: username
+      operator: username,
+      createdAt: new Date(),
     }, { transaction: t });
 
     await t.commit();

@@ -85,7 +85,7 @@ export async function seedDatabase() {
         color: 'Natural Titanium',
         storage: '256GB',
         ram: '8GB',
-        category: phoneCat.id
+        categoryId: phoneCat.id
       },
       {
         name: 'Samsung Galaxy S24 Ultra',
@@ -93,7 +93,7 @@ export async function seedDatabase() {
         color: 'Phantom Black',
         storage: '512GB',
         ram: '12GB',
-        category: phoneCat.id
+        categoryId: phoneCat.id
       },
       {
         name: 'MacBook Pro 16"',
@@ -101,7 +101,7 @@ export async function seedDatabase() {
         color: 'Space Gray',
         storage: '1TB SSD',
         ram: '32GB',
-        category: laptopCat.id
+        categoryId: laptopCat.id
       }
     ]);
     console.log('✅ Products seeded');

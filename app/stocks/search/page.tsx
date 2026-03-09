@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/Layout/MainLayout';
 import { SearchIcon, FilterIcon, EyeIcon, EditIcon, PackageIcon } from 'lucide-react';
 import { Category } from '@/db/models/Category';
@@ -60,7 +60,7 @@ export default function StockSearchPage() {
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.color && product.color.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = !selectedCategory || product?.category.toString() === selectedCategory;
+    const matchesCategory = !selectedCategory || product?.categoryId.toString() === selectedCategory;
     const matchesPrice = (!priceRange.min || product.price >= parseFloat(priceRange.min)) &&
       (!priceRange.max || product.price <= parseFloat(priceRange.max));
     const matchesStock = !inStockOnly || product.quantity > 0;
@@ -210,7 +210,7 @@ export default function StockSearchPage() {
                   {product.color && <p>Color: {product.color}</p>}
                   {product.storage && <p>Storage: {product.storage}</p>}
                   {product.ram && <p>RAM: {product.ram}</p>}
-                  {product.categoryRelation?.name && <p>Category: {product?.categoryRelation?.name}</p>}
+                  {product.category?.name && <p>Category: {product?.category?.name}</p>}
                 </div>
 
                 {/* Action Buttons */}

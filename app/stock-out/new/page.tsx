@@ -183,7 +183,7 @@ export default function NewStockOutPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-white font-medium">{product.name}</p>
-                          <p className="text-gray-400 text-sm">{product.categoryRelation?.name}</p>
+                          <p className="text-gray-400 text-sm">{product.category?.name}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-white font-medium">${Number(product.price).toFixed(2)}</p>
@@ -206,7 +206,7 @@ export default function NewStockOutPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-white font-medium">{selectedProduct.name}</p>
-                    <p className="text-gray-400 text-sm">{selectedProduct.categoryRelation?.name}</p>
+                    <p className="text-gray-400 text-sm">{selectedProduct.category?.name}</p>
                     <p className="text-green-400 text-sm mt-1">{selectedProduct.quantity} units available</p>
                   </div>
                   <div className="text-right">

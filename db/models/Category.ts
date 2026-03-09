@@ -1,6 +1,8 @@
 import 'reflect-metadata'; // 👈 required for decorator metadata for sequelize
 import { Optional } from 'sequelize';
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany } from 'sequelize-typescript';
+import { Product } from './Product';
+import type { NonAttribute } from 'sequelize/lib/model';
 
 interface CategoryAttributes {
     id: number;
@@ -23,11 +25,14 @@ export class Category extends Model<CategoryAttributes, CategoryCreationAttribut
     @Column({ type: DataType.INTEGER, allowNull: true })
     declare parent_id?: number | null;
 
-    @BelongsTo(() => Category, 'parent_id')
-    declare parent: Category;
+    @BelongsTo(() => Category, { foreignKey: 'parent_id', as: 'parent' })
+    declare parent: NonAttribute<Category>;
 
-    @HasMany(() => Category, 'parent_id')
-    declare children: Category[];
+    @HasMany(() => Category, { foreignKey: 'parent_id', as: 'children' })
+    declare children: NonAttribute<Category>[];
+
+    @HasMany(() => Product, { foreignKey: 'categoryId' })
+    declare products: NonAttribute<Product>[];
 
     @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
     declare is_active: boolean;

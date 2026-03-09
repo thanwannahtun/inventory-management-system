@@ -100,7 +100,8 @@ export default function CategoriesPage() {
 
   const handleEdit = (category: Category) => {
     // Navigate to edit page or open edit modal
-    window.location.href = `/categories/edit/${category.id}`;
+    window.location.href = `/categories/${category.id}?is_root=true`;
+    // window.location.href = `/categories/edit/${category.id}`;
   };
 
   const filteredCategories = categories.filter(category =>

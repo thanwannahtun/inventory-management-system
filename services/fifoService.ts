@@ -177,7 +177,7 @@ export class FIFOService {
         },
         {
           model: Category,
-          as: 'categoryRelation',
+          as: 'category',
           attributes: ['id', 'name']
         },
         {
@@ -214,7 +214,7 @@ export class FIFOService {
         receivedDate: batch.receivedDate,
         value: batch.remainingQuantity * batch.purchasePrice
       })),
-      category: product.categoryRelation,
+      category: product.category,
       specification: product.specification,
     };
   }
@@ -233,7 +233,7 @@ export class FIFOService {
         },
         {
           model: Category,
-          as: 'categoryRelation',
+          as: 'category',
           attributes: ['id', 'name']
         }
       ],
@@ -245,7 +245,7 @@ export class FIFOService {
       const totalQuantity = batches.reduce((sum, batch) => sum + batch.remainingQuantity, 0);
       const totalValue = batches.reduce((sum, batch) => sum + (batch.remainingQuantity * batch.purchasePrice), 0);
       const averageCost = totalQuantity > 0 ? totalValue / totalQuantity : 0;
-
+      // 30 to 47
       return {
         id: product.id,
         name: product.name,
@@ -253,7 +253,7 @@ export class FIFOService {
         quantity: totalQuantity,
         inventoryValue: totalValue,
         averageCost,
-        category: product.categoryRelation,
+        category: product.category,
         batches: batches.map(batch => ({
           id: batch.id,
           initialQuantity: batch.initialQuantity,

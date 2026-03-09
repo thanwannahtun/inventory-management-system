@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
-    const category = searchParams.get('category') || '';
+    const categoryId = searchParams.get('categoryId') || '';
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const color = searchParams.get('color') || '';
@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    if (category) {
-      whereClause.category = parseInt(category);
+    if (categoryId) {
+      whereClause.categoryId = parseInt(categoryId);
     }
 
     if (minPrice) {
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       include: [
         {
           model: Category,
-          as: 'categoryRelation',
+          as: 'category',
           attributes: ['id', 'name']
         },
         {
@@ -128,12 +128,12 @@ export const POST = withAuth(async (request, { user }) => {
       color,
       storage,
       ram,
-      category,
+      categoryId,
       specifications
     } = await request.json();
 
     // Validation (Rollback if fails)
-    if (!name || !price || !quantity || !category) {
+    if (!name || !price || !quantity || !categoryId) {
       await t.rollback();
       return NextResponse.json(
         { error: 'Name, price, quantity, and category are required' },
@@ -150,7 +150,7 @@ export const POST = withAuth(async (request, { user }) => {
       color: color || null,
       storage: storage || null,
       ram: ram || null,
-      category: parseInt(category)
+      categoryId: parseInt(categoryId)
     }, { transaction: t });
 
     // 3. Create Specifications within the same transaction

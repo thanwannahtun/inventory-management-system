@@ -1,9 +1,10 @@
 import 'reflect-metadata'; // 👈 required for decorator metadata for sequelize
-import { NonAttribute, Optional } from 'sequelize';
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasOne, HasMany } from 'sequelize-typescript';
 import { Category } from './Category';
 import { Specification } from './Specification';
 import { StockBatch } from './StockBatch';
+import type { NonAttribute } from 'sequelize/lib/model';
+import { Optional } from 'sequelize';
 
 interface ProductAttributes {
     id: number;
@@ -13,7 +14,7 @@ interface ProductAttributes {
     color?: string | null;
     storage?: string | null;
     ram?: string | null;
-    category: number;
+    categoryId: number;
 }
 
 interface ProductCreationAttributes extends Optional<ProductAttributes, 'id' | 'image' | 'color' | 'storage' | 'ram'> { }
@@ -43,10 +44,10 @@ export class Product extends Model<ProductAttributes, ProductCreationAttributes>
 
     @ForeignKey(() => Category)
     @Column({ type: DataType.INTEGER, allowNull: false })
-    declare category: number;
+    declare categoryId: number;
 
-    @BelongsTo(() => Category, 'category')
-    declare categoryRelation: Category;
+    @BelongsTo(() => Category, { foreignKey: 'categoryId', as: 'category' })
+    declare category: NonAttribute<Category>;
 
     @HasOne(() => Specification)
     declare specification: Specification;
@@ -62,11 +63,11 @@ export class Product extends Model<ProductAttributes, ProductCreationAttributes>
         return 0;
     }
 
-    // Virtual field for inventory value
+    // FIFO/LIFO Inventory Valuation
     get inventoryValue(): number {
         if (this.stockBatches) {
-            return this.stockBatches.reduce((total, batch) => 
-                total + (batch.remainingQuantity * batch.purchasePrice), 0);
+            return this.stockBatches.reduce((total, batch) =>
+                total + ((batch.remainingQuantity || 0) * (batch.purchasePrice || 0)), 0);
         }
         return 0;
     }
@@ -76,7 +77,7 @@ export class Product extends Model<ProductAttributes, ProductCreationAttributes>
         if (this.stockBatches && this.stockBatches.length > 0) {
             const totalQuantity = this.stockBatches.reduce((total, batch) => total + batch.remainingQuantity, 0);
             if (totalQuantity > 0) {
-                const totalCost = this.stockBatches.reduce((total, batch) => 
+                const totalCost = this.stockBatches.reduce((total, batch) =>
                     total + (batch.remainingQuantity * batch.purchasePrice), 0);
                 return totalCost / totalQuantity;
             }

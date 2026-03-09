@@ -149,7 +149,7 @@ export default function StockManagementPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-white">{product.name}</h3>
-                  <p className="text-gray-400">{product.categoryRelation?.name}</p>
+                  <p className="text-gray-400">{product.category?.name}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-white">${product.price}</p>

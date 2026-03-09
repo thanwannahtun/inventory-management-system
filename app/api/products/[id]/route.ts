@@ -18,7 +18,7 @@ export async function GET(
     //   include: [
     //     {
     //       model: Category,
-    //       as: 'categoryRelation',
+    //       as: 'category',
     //       attributes: ['id', 'name']
     //     },
     //     {
@@ -85,7 +85,7 @@ export async function PUT(
       color: body.color ?? product.color,
       storage: body.storage ?? product.storage,
       ram: body.ram ?? product.ram,
-      category: body.category ?? product.category
+      categoryId: body.category ?? product.category
     }, { transaction });
 
     // 2. Update or Create Specifications
@@ -106,7 +106,7 @@ export async function PUT(
 
     // Re-fetch with associations to return the full updated object
     const updatedProduct = await Product.findByPk(id, {
-      include: [Specification, { model: Category, as: 'categoryRelation' }]
+      include: [Specification, { model: Category, as: 'category' }]
     });
 
     return NextResponse.json(updatedProduct);

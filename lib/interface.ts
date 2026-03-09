@@ -8,14 +8,14 @@ export interface ProductData {
   color?: string;
   storage?: string;
   ram?: string;
-  category: number;
-  categoryRelation?: {
+  categoryId: number;
+  category?: {
     id: number,
     name: string
   };
   specification?: Specification;
   stockBatches?: StockBatch[]; // For displaying stock status
-  
+
   // Virtual fields from FIFO service
   inventoryValue?: number;
   averageCost?: number;

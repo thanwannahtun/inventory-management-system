@@ -12,12 +12,17 @@ import { JWTPayload } from '@/lib/auth';
 export const GET = withAuth(async (request, { user, params }) => {
   try {
     await connectDatabase();
-    const categories = await sequelize.models.Category.findAll({
+    const categories = await Category.findAll({
       include: [
         {
           model: Category,
           as: 'children',
           required: false
+        },
+        {
+          model: Category,
+          as: 'parent',
+          include: [{ model: Category, as: 'parent' }] // Continue nesting or use a recursive helper
         }
       ],
       where: {
@@ -60,7 +65,8 @@ export const POST = withAuth(async (request, { user, params }) => {
     await ActivityLog.create({
       type: 'category_added',
       description: `New Category Added: ${category.name} `,
-      operator: 'admin'
+      operator: 'admin',
+      createdAt: new Date()
     });
 
     return NextResponse.json(category, { status: 201 });

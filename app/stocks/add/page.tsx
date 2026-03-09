@@ -21,7 +21,7 @@ const INITIAL_FORM_STATE: ProductData = {
   color: '',
   storage: '',
   ram: '',
-  category: 0,
+  categoryId: 0,
   specification: {
     model: '',
     display: '',
@@ -85,7 +85,7 @@ export default function AddStockPage() {
     e.preventDefault();
 
     // Validate required fields
-    if (!formData.name || !formData.price || !formData.quantity || !formData.category || !formData.purchasePrice) {
+    if (!formData.name || !formData.price || !formData.quantity || !formData.categoryId || !formData.purchasePrice) {
       alert('Please fill in all required fields including purchase price');
       return;
     }
@@ -102,7 +102,7 @@ export default function AddStockPage() {
         color: formData.color || null,
         storage: formData.storage || null,
         ram: formData.ram || null,
-        category: formData.category,
+        category: formData.categoryId,
         specifications: showSpecifications ? formData.specification : null
       };
 
@@ -181,7 +181,7 @@ export default function AddStockPage() {
                 <select
                   id="category"
                   name="category"
-                  value={formData.category ?? 0}
+                  value={formData.categoryId ?? 0}
                   onChange={handleInputChange}
                   required
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
