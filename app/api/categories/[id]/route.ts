@@ -16,14 +16,16 @@ export const GET = withAuth(async (request, { user, params }) => {
       include: [
         {
           model: Category,
-          as: 'children'
+          as: 'children',
+          attributes: ['id', 'name', 'parent_id']
         },
         {
           model: Category,
           as: 'parent',
-          include: [{ model: Category, as: 'parent' }] // Continue nesting or use a recursive helper
+          attributes: ['id', 'name', 'parent_id']
         }
-      ]
+      ],
+      attributes: ['id', 'name', 'parent_id', 'is_active']
     });
 
     if (!category) {

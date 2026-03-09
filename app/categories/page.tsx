@@ -26,7 +26,7 @@ export default function CategoriesPage() {
     // Fetch real data from API
     const fetchCategories = async () => {
       try {
-        const response = await authFetch('/api/categories');
+        const response = await authFetch(`/api/categories`);
         if (response.ok) {
           const data = await response.json();
           setCategories(data);
@@ -170,8 +170,8 @@ export default function CategoriesPage() {
                     <h3 className="text-lg font-semibold text-white">{category.name}</h3>
                     <div className="mt-2 flex items-center space-x-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${category.is_active
-                          ? 'bg-green-900 text-green-300'
-                          : 'bg-red-900 text-red-300'
+                        ? 'bg-green-900 text-green-300'
+                        : 'bg-red-900 text-red-300'
                         }`}>
                         {category.is_active ? 'Active' : 'Inactive'}
                       </span>
